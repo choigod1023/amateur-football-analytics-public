@@ -1,0 +1,145 @@
+{
+  "schema": 1,
+  "verdict": "different_people",
+  "user_answer": "synthetic example answer (different people)",
+  "pair": [
+    "29",
+    "31"
+  ],
+  "scope": {
+    "video_sha256": "3c98b6dff998de552444f48876c351aa50b88c4cb07992f175a9341d170790c3",
+    "trace_sha256": "ac3699ab37e8ed985f51f4d002d0d0f594584f8286a6bf21b11281d47e316df9",
+    "start_s": 11.6,
+    "end_s": 13.0,
+    "source_offset_s": 0
+  },
+  "identity_after_crossing": null,
+  "team": null,
+  "training_applied": false,
+  "tracks": {
+    "29": [
+      {
+        "frame": 58,
+        "box": [
+          261.92,
+          300.72,
+          277.22,
+          324.38
+        ],
+        "team": null
+      },
+      {
+        "frame": 60,
+        "box": [
+          263.42,
+          300.58,
+          279.49,
+          323.95
+        ],
+        "team": null
+      },
+      {
+        "frame": 61,
+        "box": [
+          264.92,
+          304.34,
+          280.93,
+          327.37
+        ],
+        "team": null
+      },
+      {
+        "frame": 64,
+        "box": [
+          266.42,
+          304.25,
+          281.56,
+          327.34
+        ],
+        "team": null
+      },
+      {
+        "frame": 65,
+        "box": [
+          267.92,
+          302.23,
+          284.57,
+          325.36
+        ],
+        "team": null
+      }
+    ],
+    "31": [
+      {
+        "frame": 58,
+        "box": [
+          453.72,
+          303.97,
+          470.61,
+          327.54
+        ],
+        "team": null
+      },
+      {
+        "frame": 60,
+        "box": [
+          455.22,
+          308.58,
+          472.17,
+          331.63
+        ],
+        "team": null
+      },
+      {
+        "frame": 61,
+        "box": [
+          456.72,
+          301.18,
+          472.3,
+          324.32
+        ],
+        "team": null
+      },
+      {
+        "frame": 62,
+        "box": [
+          458.22,
+          301.81,
+          473.83,
+          325.62
+        ],
+        "team": null
+      },
+      {
+        "frame": 63,
+        "box": [
+          459.72,
+          303.72,
+          475.88,
+          327.36
+        ],
+        "team": null
+      },
+      {
+        "frame": 64,
+        "box": [
+          461.22,
+          300.6,
+          477.31,
+          323.66
+        ],
+        "team": null
+      },
+      {
+        "frame": 65,
+        "box": [
+          462.72,
+          304.28,
+          478.13,
+          327.96
+        ],
+        "team": null
+      }
+    ]
+  }
+}

@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>슛 태깅</title>
+<link rel="stylesheet" href="/shots.css">
+</head>
+<body>
+<header><h1>슛 태깅</h1><p id="progress">불러오는 중</p></header>
+<main>
+  <aside>
+    <div class="filters">
+      <label>경기 <select id="f-match"><option value="">전체</option></select></label>
+      <label>팀 <select id="f-side"><option value="">전체</option><option value="ours">우리 공격</option><option value="theirs">상대 공격</option></select></label>
+      <label><input type="checkbox" id="f-todo"> 태그 안 한 것만</label>
+    </div>
+    <ol id="list"></ol>
+    <details id="extra"><summary>목록에 없는 슛 추가 (박스 밖 슛 등)</summary>
+      <div class="extra-form">
+        <label>경기 <select id="x-match"></select></label>
+        <label>구간 <select id="x-half"><option>전반</option><option>후반</option></select></label>
+        <label>경기 시각(분) <input id="x-minute" type="number" min="0" max="60" step="0.5" value="10"></label>
+        <label>팀 <select id="x-side"><option value="ours">우리</option><option value="theirs">상대</option></select></label>
+        <p class="note">아래 그림에서 슛 위치를 누른 뒤 결과 단추를 누르세요. 그림은 선택한 장면의 그림을 그대로 씁니다.</p>
+        <div class="buttons" id="x-buttons"></div>
+      </div>
+    </details>
+  </aside>
+  <section id="detail" hidden>
+    <h2 id="title"></h2>
+    <div class="two">
+      <div><video id="video" controls playsinline preload="metadata"></video><p class="note">영상은 장면 6초 전부터 8초 뒤까지입니다. 박스에 들어간 순간이 6초 지점입니다.</p></div>
+      <div><svg id="pitch" viewBox="0 0 570 408" width="100%"></svg><p class="note" id="pitch-note">그림은 우리 골대가 왼쪽입니다. 슛이 나간 위치를 눌러 주세요.</p></div>
+    </div>
+    <p id="side-row" hidden>이 골 장면은 어느 팀의 슛입니까? <select id="side-pick"><option value="">고르세요</option><option value="ours">우리 팀</option><option value="theirs">상대 팀</option></select></p>
+    <div class="buttons" id="buttons"></div>
+    <p id="saved" class="saved"></p>
+  </section>
+</main>
+<script src="/shots.js"></script>
+</body>
+</html>

@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>분석 표시</title>
+<link rel="stylesheet" href="/tag.css">
+</head>
+<body>
+<header>
+  <div><b id="clock">경기 시작 전</b><span id="conn" class="ok">연결됨</span></div>
+  <div class="marks">
+    <button data-kind="start_h1" class="mark">전반 시작</button>
+    <button data-kind="end_h1" class="mark">전반 종료</button>
+    <button data-kind="start_h2" class="mark">후반 시작</button>
+    <button data-kind="end_h2" class="mark">후반 종료</button>
+  </div>
+</header>
+
+<main>
+  <section class="grid">
+    <button data-kind="shot_ours" class="ours">우리 슛</button>
+    <button data-kind="shot_theirs" class="theirs">상대 슛</button>
+    <button data-kind="goal_ours" class="ours">우리 골</button>
+    <button data-kind="goal_theirs" class="theirs">상대 골</button>
+    <button data-kind="corner_ours" class="ours">우리 코너킥</button>
+    <button data-kind="corner_theirs" class="theirs">상대 코너킥</button>
+  </section>
+  <h2>약점 관찰</h2>
+  <section class="grid">
+    <button data-kind="line_high" class="watch">수비 줄 높음</button>
+    <button data-kind="pivot_up" class="watch">수미 둘 다 올라감</button>
+    <button data-kind="wide_empty" class="watch">측면 빔</button>
+    <button data-kind="second_ball" class="watch">세컨볼 빔</button>
+    <button data-kind="stretched" class="watch">팀 늘어짐</button>
+    <button data-kind="note" class="plain">메모</button>
+  </section>
+  <section class="grid">
+    <button data-kind="good" class="good">좋은 장면</button>
+    <button data-kind="danger" class="danger">위험 장면</button>
+  </section>
+
+  <div id="toast" hidden><span id="toast-text"></span><button id="undo">되돌리기</button></div>
+
+  <h2>기록 <small id="count"></small></h2>
+  <div class="tools">
+    <select id="filter"><option value="">전체</option><option value="h1">전반</option><option value="h2">후반</option></select>
+    <button id="make-clips">클립 만들기</button>
+  </div>
+  <p id="clip-note" class="note"></p>
+  <ol id="list"></ol>
+  <p class="note">버튼은 장면이 끝난 직후에 누르세요. 클립은 누른 시각의 20초 전부터 6초 뒤까지 녹화 원본에서 잘라 옵니다. 시각은 서버 기준입니다.</p>
+</main>
+
+<dialog id="player"><video id="video" controls playsinline></video><button id="close">닫기</button></dialog>
+<script src="/tag.js"></script>
+</body>
+</html>

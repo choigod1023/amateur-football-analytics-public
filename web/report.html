@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>영상 분석 리포트</title>
+<link rel="stylesheet" href="/report.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="brand"><span class="brand-mark" aria-hidden="true"></span><div><strong>Football Coach</strong><small>영상 분석 리포트</small></div></div>
+  <div class="health" id="health" role="status" aria-live="polite">
+    <span class="chip" id="chip-worker">작업기 확인 중</span>
+    <span class="chip" id="chip-queue">대기 0 · 진행 0</span>
+    <span class="chip" id="chip-disk">저장공간 -</span>
+    <a class="chip" href="/alerts" style="text-decoration:none;color:var(--info)">알림 평가</a>
+    <a class="chip" href="/players" style="text-decoration:none;color:var(--info)">선수 확인</a>
+    <a class="chip" href="/cards" style="text-decoration:none;color:var(--info)">선수 카드</a>
+  </div>
+</header>
+
+<main class="layout">
+  <section class="panel" aria-labelledby="new-title">
+    <h1 id="new-title">새 리포트 만들기</h1>
+    <p class="lead">녹화 영상을 올리면 선수 탐지와 추적, 장면 선정을 거쳐 한 팀의 영상 분석 리포트를 만들어 드립니다. 선수 위치와 움직임으로 분석하며, 공의 흐름은 판정하지 않습니다.</p>
+    <form id="new-form" novalidate>
+      <label class="field"><span>제목 <em>선택</em></span><input id="title" maxlength="60" placeholder="예: 11/11 전반"></label>
+      <label class="field"><span>녹화 영상</span><input id="file" type="file" accept=".mp4,.mov,.mkv,.ts,.m4v,video/*"><small>mp4, mov, mkv, ts, m4v · 최대 4GB</small></label>
+      <div class="grid2">
+        <label class="field"><span>카메라 설정</span><select id="camera"></select><small>경기장 보정이 저장된 카메라</small></label>
+        <label class="field"><span>구간 이름</span><input id="half" value="전반" maxlength="12"></label>
+      </div>
+      <div class="grid2">
+        <label class="field"><span>리포트 대상 팀</span><select id="team"><option value="B" data-team-name="B">팀 B (어두운 옷)</option><option value="A" data-team-name="A">팀 A (밝은 옷)</option></select></label>
+        <label class="field"><span>대상 팀의 공격 방향</span><select id="direction"><option value="1">화면 왼쪽에서 오른쪽</option><option value="-1">화면 오른쪽에서 왼쪽</option></select></label>
+      </div>
+      <div class="grid2">
+        <label class="field"><span>분석 시작</span><input id="start" value="0:00" inputmode="numeric"><small>분:초 또는 초</small></label>
+        <label class="field"><span>분석 끝</span><input id="end" value="20:00" inputmode="numeric"><small>영상 안의 시각 기준</small></label>
+      </div>
+      <label class="field"><span>득점 시각 <em>선택</em></span><input id="goals" placeholder="예: 5:00, 7:30, 8:20"><small>입력하면 득점 장면 리포트, 비우면 구조가 좋은 장면과 보완할 장면 리포트</small></label>
+      <label class="field"><span>접속 토큰</span><input id="token" type="password" autocomplete="off"><small>관리자에게 받은 값입니다. 이 화면을 닫으면 사라집니다.</small></label>
+      <button class="primary" id="send" type="submit">업로드하고 시작</button>
+      <progress id="bar" value="0" max="100" hidden></progress>
+      <p class="message" id="message" role="alert"></p>
+    </form>
+  </section>
+
+  <section class="panel wide" aria-labelledby="jobs-title">
+    <div class="panel-head"><h2 id="jobs-title">작업과 보관함</h2><span class="muted" id="jobs-count"></span></div>
+    <p class="muted">작업은 한 번에 하나씩 순서대로 처리되며, 영상 길이의 1.5~2배 정도 걸립니다.</p>
+    <div class="jobs" id="jobs"></div>
+    <p class="empty" id="empty" hidden>아직 만든 리포트가 없습니다. 왼쪽에서 첫 리포트를 만들어 보세요.</p>
+    <div class="live" aria-label="라이브 분석">
+      <strong>라이브 분석</strong>
+      <span>라이브 알림은 분석 컴퓨터에서 실행하며(docs/live-feedback.md), 나온 알림은 <a href="/alerts">알림 평가</a> 화면에서 맞음, 틀림, 쓸모없음으로 평가할 수 있습니다.</span>
+    </div>
+  </section>
+</main>
+
+<dialog id="detail" aria-labelledby="detail-title">
+  <div class="dialog-head"><h2 id="detail-title"></h2><button class="ghost" id="detail-close" type="button" aria-label="닫기">닫기</button></div>
+  <p class="muted" id="detail-meta"></p>
+  <video id="detail-video" controls preload="metadata" hidden></video>
+  <div class="links" id="detail-links"></div>
+  <article class="report-text" id="detail-text"></article>
+  <details class="log" id="detail-log" hidden>
+    <summary>처리 로그 (관리자)</summary>
+    <div class="log-tabs" id="log-tabs"></div>
+    <pre id="log-body">토큰을 입력한 뒤 단계를 고르면 로그가 보입니다.</pre>
+  </details>
+</dialog>
+<script src="/report.js"></script>
+<script src="/team-names.js"></script>
+</body>
+</html>

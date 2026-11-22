@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>벤치 화면</title>
+<link rel="stylesheet" href="/bench.css">
+</head>
+<body>
+<header class="band" id="band" role="status" aria-live="polite">
+  <span class="dot" id="band-dot" aria-hidden="true"></span>
+  <strong id="band-state">연결 중</strong>
+  <span id="band-detail"></span>
+  <span class="spacer"></span>
+  <span id="band-link"></span>
+</header>
+
+<link rel="stylesheet" href="/live-video.css">
+<main>
+  <section class="bench-live" aria-label="라이브 영상">
+    <h2>라이브 영상 <span id="live-state"></span> <a href="/live" style="font-size:.8rem">크게 보기</a></h2>
+    <div class="live-box"><img id="live-img" alt="라이브 영상"><div class="live-empty" id="live-empty">송출 영상을 기다리는 중입니다</div></div>
+  </section>
+
+  <section class="current" id="current" aria-live="assertive">
+    <div class="empty" id="empty">아직 알림이 없습니다</div>
+    <div class="alert" id="alert" hidden>
+      <div class="meta"><span class="badge" id="badge"></span><span class="age" id="age"></span></div>
+      <h1 id="title"></h1>
+      <p class="line" id="line"></p>
+      <p class="proof" id="proof"></p>
+    </div>
+  </section>
+
+  <section class="recent" aria-labelledby="recent-title">
+    <h2 id="recent-title">이전 알림</h2>
+    <ol id="recent"></ol>
+  </section>
+</main>
+<script src="/watch-banner.js"></script>
+<script src="/bench.js"></script>
+<script src="/bench-extra.js"></script>
+<script src="/live-video-view.js"></script>
+</body>
+</html>

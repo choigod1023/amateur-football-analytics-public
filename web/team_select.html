@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>우리 팀 고르기</title>
+<style>
+  :root { --bg: #f6f7f9; --card: #fff; --ink: #1c2530; --sub: #5b6876; --line: #d5dbe2; --accent: #1f6feb; --ok: #1a7f4b; --warn: #a15c00; }
+  @media (prefers-color-scheme: dark) { :root { --bg: #14181d; --card: #1d242c; --ink: #eef2f6; --sub: #a3afbc; --line: #34404c; --accent: #5aa2ff; --ok: #58c98a; --warn: #f0b34a; } }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 1.2rem/1.5 "Malgun Gothic", system-ui, sans-serif; }
+  main { max-width: 1100px; margin: 0 auto; padding: 16px; }
+  h1 { font-size: 1.7rem; margin: 8px 0 4px; }
+  p.sub { color: var(--sub); margin: 0 0 16px; }
+  .groups { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .group { background: var(--card); border: 2px solid var(--line); border-radius: 12px; padding: 12px; }
+  .group h2 { font-size: 1.3rem; margin: 0 0 8px; }
+  .pics { display: flex; gap: 8px; }
+  .pics img { height: 190px; max-width: 32%; object-fit: contain; background: #0003; border-radius: 6px; }
+  button { font: inherit; font-size: 1.25rem; padding: 14px 20px; margin-top: 12px; width: 100%; border-radius: 10px; border: 2px solid var(--accent); background: var(--accent); color: #fff; cursor: pointer; }
+  button.plain { background: transparent; color: var(--ink); border-color: var(--line); }
+  #confirm { display: none; background: var(--card); border: 2px solid var(--accent); border-radius: 12px; padding: 16px; margin-top: 16px; }
+  #confirm .row { display: flex; gap: 12px; } #confirm button { margin-top: 8px; }
+  .note { padding: 10px 14px; border-radius: 8px; border: 1px solid var(--line); background: var(--card); margin: 12px 0; }
+  .warn { color: var(--warn); } .good { color: var(--ok); font-weight: 700; }
+  @media (max-width: 640px) { .groups { grid-template-columns: 1fr; } .pics img { height: 150px; } }
+</style>
+</head>
+<body>
+<main>
+  <h1>우리 팀은 어느 쪽입니까?</h1>
+  <p class="sub">경기 시작 직후 선수들의 옷 색으로 두 팀을 나눈 사진입니다. 우리 팀 선수들이 있는 쪽을 한 번만 눌러 주세요.</p>
+  <div id="current" class="note" hidden></div>
+  <div id="status" class="note">불러오는 중입니다.</div>
+  <div class="groups" id="groups"></div>
+  <div id="confirm"><div id="sentence"></div><div class="row"><button id="yes">맞습니다</button><button id="no" class="plain">아닙니다, 다시 고르겠습니다</button></div></div>
+  <p><button id="clear" class="plain" hidden>저장된 팀 색 지우기 (예전 방식으로 돌아감)</button></p>
+</main>
+<script src="/team-select.js"></script>
+</body>
+</html>

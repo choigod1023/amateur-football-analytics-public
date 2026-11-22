@@ -1,0 +1,7 @@
+{
+  "model": "yolo11n.pt",
+  "confidence": 0.35,
+  "image_size": 640,
+  "team_hsv": {},
+  "calibration": null
+}

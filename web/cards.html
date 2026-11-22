@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>선수 카드</title>
+<link rel="stylesheet" href="/report.css">
+<link rel="stylesheet" href="/alerts.css">
+<style>
+  .cards-layout { max-width: 1280px; margin: 24px auto; padding: 0 16px; display: grid; gap: 20px; }
+  .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(520px, 1fr)); gap: 16px; }
+  @media (max-width: 600px) { .cards { grid-template-columns: 1fr; } }
+  .cards figure { margin: 0; border: 1px solid var(--line); border-radius: 12px; overflow: hidden; background: var(--panel); }
+  .cards img { width: 100%; display: block; }
+  .cards figcaption { padding: 8px 12px; font-size: 13px; color: var(--muted); }
+  table.sum { width: 100%; border-collapse: collapse; font-size: 14px; }
+  table.sum th, table.sum td { padding: 6px 10px; border-bottom: 1px solid var(--line); text-align: right; }
+  table.sum th:first-child, table.sum td:first-child { text-align: left; }
+  table.sum th { color: var(--muted); font-weight: 600; cursor: pointer; }
+</style>
+</head>
+<body>
+<header class="topbar">
+  <div class="brand"><span class="brand-mark" aria-hidden="true"></span><div><strong>Football Coach</strong><small>선수 카드</small></div></div>
+  <div class="health" role="status" aria-live="polite">
+    <span class="chip" id="chip-made">카드 0장</span>
+    <a class="chip link" href="/players">선수 확인</a>
+    <a class="chip link" href="/report">리포트</a>
+  </div>
+</header>
+<main class="cards-layout">
+  <section class="panel" aria-labelledby="cards-title">
+    <h1 id="cards-title">선수 카드</h1>
+    <p class="lead">선수 확인 화면에서 이름이 정해진 추적 조각만으로 계산한 기록입니다. 추적이 끊긴 시간의 움직임은 들어 있지 않으므로 경기 전체 기록이 아니고, 이름이 더 달릴수록 정확해집니다. 카드는 분석 컴퓨터에서 다시 만들어야 새 답이 반영됩니다(만든 시각은 아래에 표시됩니다).</p>
+    <p class="muted" id="made"></p>
+    <table class="sum" id="sum" hidden>
+      <thead><tr><th data-k="number">선수</th><th data-k="seconds">추적 시간</th><th data-k="distance">달린 거리</th><th data-k="top_kmh">빠를 때 속도</th><th data-k="sprints">스프린트</th></tr></thead>
+      <tbody></tbody>
+    </table>
+    <p class="empty" id="empty" hidden>아직 만든 카드가 없습니다.</p>
+  </section>
+  <section class="cards" id="cards" aria-label="선수 카드 목록"></section>
+</main>
+<script src="/cards.js"></script>
+</body>
+</html>

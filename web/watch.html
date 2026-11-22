@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>라이브 감시</title>
+<link rel="stylesheet" href="/watch.css">
+</head>
+<body>
+<main>
+  <section class="state" id="state" data-level="unknown">
+    <h1 id="headline">확인 중</h1>
+    <p id="detail"></p>
+    <p class="small" id="meta"></p>
+  </section>
+  <section>
+    <h2>멈춤 기록</h2>
+    <table>
+      <thead><tr><th>시작</th><th>원인</th><th>지속</th><th>복구</th></tr></thead>
+      <tbody id="log"><tr><td colspan="4">아직 기록이 없습니다</td></tr></tbody>
+    </table>
+    <p class="small">시작은 마지막으로 정상 신호가 있던 시각입니다. 기록은 서버에 남아 서버를 다시 켜도 이어집니다.</p>
+  </section>
+  <section>
+    <h2>하프타임 보고서</h2>
+    <p id="half">확인 중</p>
+    <p class="small">전반이 끝나면 오른쪽 아래 "전반 끝" 버튼을 누르세요. 영상이 끊긴 시간이 길면 화면이 먼저 물어봅니다. 사람이 확인하기 전에는 만들지 않습니다.</p>
+  </section>
+  <p class="small"><a href="/bench">벤치 화면으로</a></p>
+</main>
+<script src="/watch-banner.js"></script>
+<script src="/watch.js"></script>
+</body>
+</html>

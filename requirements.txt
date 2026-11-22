@@ -1,0 +1,9 @@
+fastapi
+uvicorn
+opencv-python
+numpy
+pydantic
+ultralytics
+pytest
+httpx
+lap>=0.5.12

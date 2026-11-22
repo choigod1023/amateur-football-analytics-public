@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>이벤트 검토 — Touchline</title><link rel="stylesheet" href="/style.css"></head>
+<body><main class="app ev-app">
+<header><div class="brand"><div><strong>이벤트 검토</strong><small>EVENT REVIEW</small></div></div><a class="ev-back" href="/train">장면 라벨링으로 돌아가기</a></header>
+<section class="intro"><div><h1>킥오프와 골 확인</h1>
+<p>자동으로 고른 후보 순간의 짧은 영상(소리 없음)을 보고 <b>킥오프, 골, 세트피스, 슈팅, 기타, 아님</b> 중 무엇인지 눌러 주세요. 후보는 "심판이 센터서클에 서 있는 순간" 같은 간단한 규칙으로 고른 <b>추천일 뿐이며 정답이 아닙니다.</b> 눌러 주신 답이 이후 규칙을 조정하고 채점하는 정답이 됩니다. 이 페이지는 로그인 없이 공개됩니다.</p></div></section>
+<p id="ev-status" role="status" aria-live="polite" class="ev-status">불러오는 중입니다.</p>
+<div class="ev-layout">
+<aside class="panel ev-side"><div class="ev-filters" id="ev-filters"></div><div class="ev-sort"><label>정렬 <select id="ev-sort"><option value="time">시간순</option><option value="score">추천 점수순</option></select></label></div><div class="ev-list" id="ev-list"></div></aside>
+<section class="panel ev-main" id="ev-main" hidden>
+<h2 id="ev-title">후보</h2><p id="ev-reasons" class="ev-reasons"></p>
+<video id="ev-video" controls muted loop playsinline preload="auto"></video>
+<div class="ev-rate"><button type="button" data-rate="0.5">0.5배속</button><button type="button" data-rate="1">1배속</button><button type="button" data-rate="2">2배속</button><button type="button" id="ev-mark" title="영상을 멈추고 이 버튼을 누르면 지금 시각이 사건 시각으로 저장됩니다 (단축키 M)">지금 순간을 사건 시각으로 표시 (M)</button><span id="ev-marked"></span></div>
+<div class="ev-labels" id="ev-labels"></div>
+<label class="ev-note">메모(선택) <input id="ev-note" type="text" maxlength="200" placeholder="예: 왼쪽 골대, 파울 후 프리킥"></label>
+<p class="ev-help">단축키: 1 킥오프 · 2 골 · 3 세트피스 · 4 슈팅 · 5 기타 · 0 아님 · U 모르겠음 · 스페이스 재생/정지 · ←/→ 이전/다음 후보 · M 순간 표시. 답을 저장하면 다음 미검토 후보로 넘어갑니다.</p>
+</section></div>
+<section class="panel ev-manual"><h2>영상에서 직접 찾은 사건 추가</h2><p>후보에 없는 골이나 사건을 알고 계시면 시각을 적어 추가하세요. 시각은 경기 구간 영상(전체 녹화의 17분 지점)의 처음부터 센 시간입니다.</p>
+<form id="ev-manual-form" class="ev-manual-form"><label>시각 <input id="ev-manual-time" type="text" placeholder="분:초 (예: 12:34)" required></label><label>종류 <select id="ev-manual-label"></select></label><label>메모 <input id="ev-manual-note" type="text" maxlength="200"></label><button type="submit">추가</button></form>
+<h2>저장된 사건 <span id="ev-summary"></span></h2><div id="ev-saved" class="ev-saved"></div><div class="review-box-tools"><button type="button" id="ev-export">정답 내려받기(JSON)</button></div></section>
+</main><script src="/events.js"></script></body></html>

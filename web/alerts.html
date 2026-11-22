@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>알림 평가</title>
+<link rel="stylesheet" href="/report.css">
+<link rel="stylesheet" href="/alerts.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="brand"><span class="brand-mark" aria-hidden="true"></span><div><strong>Football Coach</strong><small>실시간 알림 평가</small></div></div>
+  <div class="health" role="status" aria-live="polite">
+    <span class="chip" id="chip-total">알림 0개</span>
+    <span class="chip" id="chip-done">평가 0개</span>
+    <span class="chip" id="chip-useful">도움이 된 비율 -</span>
+    <a class="chip link" href="/report">리포트</a>
+  </div>
+</header>
+
+<main class="alerts-layout">
+  <section class="panel" aria-labelledby="stats-title">
+    <h1 id="stats-title">알림 종류별 평가</h1>
+    <p class="lead">알림마다 <strong>맞음</strong>, <strong>틀림</strong>, <strong>맞지만 쓸모없음</strong>을 눌러 주세요. 이 표시가 알림 기준(임계값)을 경기에 맞게 고치는 유일한 정답 자료입니다.</p>
+    <table class="stats" id="stats"><thead><tr><th>종류</th><th>알림</th><th>평가</th><th>맞음</th><th>틀림</th><th>쓸모없음</th><th>도움이 된 비율</th></tr></thead><tbody></tbody></table>
+    <div class="filters">
+      <label>보기 <select id="filter"><option value="open">평가 안 한 알림만</option><option value="all">모두</option><option value="ok">맞음</option><option value="wrong">틀림</option><option value="useless">맞지만 쓸모없음</option></select></label>
+      <label>종류 <select id="kind"><option value="">전체</option></select></label>
+      <label>세션 <select id="session"><option value="">전체</option></select></label>
+    </div>
+  </section>
+  <section aria-label="알림 목록">
+    <div class="cards" id="cards"></div>
+    <p class="empty" id="empty" hidden>보여 줄 알림이 없습니다. 실시간 분석을 <code>--store</code> 옵션으로 실행하면 알림이 여기에 나타납니다.</p>
+  </section>
+</main>
+<script src="/alerts.js"></script>
+</body>
+</html>

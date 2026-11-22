@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>송출 상태</title>
+<style>
+:root{--bg:#f6f7f9;--fg:#1b1f24;--card:#fff;--line:#d9dde3;--green:#1a7f37;--yellow:#9a6700;--red:#cf222e;--gray:#57606a;--gbg:#dafbe1;--ybg:#fff8c5;--rbg:#ffebe9;--nbg:#eaeef2}
+@media (prefers-color-scheme:dark){:root{--bg:#0d1117;--fg:#e6edf3;--card:#161b22;--line:#30363d;--green:#3fb950;--yellow:#d29922;--red:#f85149;--gray:#8b949e;--gbg:#12261e;--ybg:#272115;--rbg:#2d1214;--nbg:#1c2128}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.5 system-ui,"Malgun Gothic",sans-serif}
+main{max-width:720px;margin:0 auto;padding:16px}
+.banner{border-radius:12px;padding:18px;border:2px solid var(--line)}
+.banner h1{margin:0 0 6px;font-size:1.35rem}.banner p{margin:0}
+.green{background:var(--gbg);border-color:var(--green)}.yellow{background:var(--ybg);border-color:var(--yellow)}.red{background:var(--rbg);border-color:var(--red)}.gray{background:var(--nbg);border-color:var(--gray)}
+ul{list-style:none;padding:0;margin:16px 0}li{background:var(--card);border:1px solid var(--line);border-left:8px solid var(--gray);border-radius:8px;padding:10px 12px;margin-bottom:8px}
+li.green{border-left-color:var(--green)}li.yellow{border-left-color:var(--yellow)}li.red{border-left-color:var(--red)}
+li .top{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap}li .name{font-weight:600}li .val{font-variant-numeric:tabular-nums}li .msg{margin-top:4px;color:var(--gray);font-size:.95rem}
+.foot{color:var(--gray);font-size:.85rem}
+</style>
+</head>
+<body>
+<main>
+<div id="banner" class="banner gray"><h1>불러오는 중</h1><p></p></div>
+<ul id="items"></ul>
+<p class="foot" id="foot"></p>
+<p class="foot">이 판정은 컴퓨터에서 영상 화질을 낮춰 가며 선수 검출을 시험한 결과에 근거합니다. 휴대폰 앱으로 직접 시험한 값은 아닙니다.</p>
+</main>
+<script>
+const $=id=>document.getElementById(id);
+function render(d){
+  $('banner').className='banner '+d.level;
+  $('banner').innerHTML='';
+  const h=document.createElement('h1');h.textContent=d.headline;const p=document.createElement('p');p.textContent=d.detail||'';
+  $('banner').append(h,p);
+  const ul=$('items');ul.innerHTML='';
+  for(const i of d.items||[]){
+    const li=document.createElement('li');li.className=i.level;
+    const top=document.createElement('div');top.className='top';
+    const n=document.createElement('span');n.className='name';n.textContent=i.label;
+    const v=document.createElement('span');v.className='val';v.textContent=i.value;
+    top.append(n,v);
+    const m=document.createElement('div');m.className='msg';m.textContent=i.message;
+    li.append(top,m);ul.append(li);
+  }
+  $('foot').textContent=d.updated?('갱신 '+d.updated+(d.file?' · 읽는 파일 '+d.file:'')):'';
+}
+async function tick(){
+  try{const r=await fetch('/api/stream-health',{cache:'no-store'});render(await r.json());}
+  catch(e){render({level:'gray',headline:'이 화면이 서버와 연결되지 않았습니다.',detail:'서버가 켜져 있는지, 주소가 맞는지 확인해 주세요.',items:[]});}
+}
+tick();setInterval(tick,3000);
+</script>
+</body>
+</html>

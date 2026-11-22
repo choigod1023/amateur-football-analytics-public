@@ -1,0 +1,19 @@
+.venv/
+__pycache__/
+.pytest_cache/
+*.pt
+*.mp4
+*.avi
+*.log
+.ultralytics/
+mediamtx/
+mediamtx.zip
+/migration/
+/uploads/
+/sequences/
+# TLS keys and certificates are secrets: never commit them
+*.key
+*.crt
+*.pem
+# Experiment outputs and data live outside the repository (../../work)
+/work/

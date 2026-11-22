@@ -1,0 +1,39 @@
+# This template is for app.secure_srt only; it is not an Internet configuration.
+logLevel: error
+rtsp: true
+rtspAddress: 127.0.0.1:18554
+rtspTransports: [tcp]
+rtmp: false
+hls: false
+webrtc: false
+moq: false
+srt: true
+srtAddress: 127.0.0.1:18890
+api: false
+metrics: false
+pprof: false
+playback: false
+authMethod: internal
+authInternalUsers:
+  # Replaced by app.secure_srt after mandatory secret checks.
+  - user: invalid_config_not_for_direct_use
+    pass: invalid_config_not_for_direct_use
+    ips: [127.0.0.1]
+    permissions:
+      - action: publish
+        path: match
+  - user: any
+    ips: [127.0.0.1]
+    permissions:
+      - action: read
+        path: match
+paths:
+  match:
+    srtPublishPassphrase: invalid_config_not_for_direct_use
+    overridePublisher: false
+    # The launchers provide an absolute recording path via MTX_ overrides.
+    record: true
+    recordFormat: fmp4
+    recordPartDuration: 1s
+    recordSegmentDuration: 10m
+    recordDeleteAfter: 0s
