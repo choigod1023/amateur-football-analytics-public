@@ -5,11 +5,16 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex">
 <title>라이브 영상</title>
+<link rel="stylesheet" href="/site.css">
 <link rel="stylesheet" href="/live-video.css">
 </head>
-<body class="live-page">
-<header><strong>라이브 영상</strong> <span id="live-state">연결 중</span> <a href="/bench">벤치 화면</a></header>
+<body class="live-page match-day">
+<header><strong>라이브 영상</strong> <span id="live-state">연결 중</span></header>
 <div class="live-box"><img id="live-img" alt="라이브 영상"><div class="live-empty" id="live-empty">송출 영상을 기다리는 중입니다</div></div>
+<div class="live-info" role="status"><b data-match-clock>경기 전</b><span data-match-score>우리 - : - 상대</span></div>
+<script src="/live-hls.js"></script>
 <script src="/live-video-view.js"></script>
+<script src="/match-clock.js"></script>
+<script src="/nav.js"></script>
 </body>
 </html>

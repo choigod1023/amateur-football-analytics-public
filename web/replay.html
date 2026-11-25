@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>지난 경기 다시보기</title>
+<link rel="stylesheet" href="/replay.css">
+<link rel="stylesheet" href="/site.css">
+</head>
+<body>
+<header class="site-head">
+  <a class="back" href="/start">‹ 전체 화면</a>
+  <h1>지난 경기 다시보기</h1>
+  <p>경기를 고르고, 보고 싶은 곳으로 옮겨 봅니다.</p>
+</header>
+<main class="replay">
+  <label class="pick">경기 고르기 <select id="match" aria-label="경기 고르기"></select></label>
+  <details id="tests" class="tests" hidden>
+    <summary id="tests-title">시험 녹화</summary>
+    <ul id="test-list" class="test-list"></ul>
+  </details>
+  <p id="info" class="info" role="status">불러오는 중</p>
+  <div class="stage" id="stage">
+    <video id="video" playsinline preload="metadata"></video>
+    <video id="video2" hidden playsinline preload="auto"></video>
+    <div class="ctl">
+      <div class="bar" id="bar">
+        <div class="track" id="track" aria-hidden="true"><div class="fill" id="fill"></div></div>
+        <input id="seek" type="range" min="0" max="0" step="1" value="0" aria-label="경기 전체에서 위치">
+      </div>
+      <div class="times"><span><span id="now">0:00</span> / <span id="total">0:00</span></span><span id="gapnote" class="gapnote"></span></div>
+      <div class="row">
+        <button id="play" type="button">재생</button>
+        <button id="mute" type="button" aria-pressed="false">소리 끄기</button>
+        <button id="full" type="button">전체 화면</button>
+      </div>
+      <div class="row">
+        <button id="back10" type="button">10초 뒤로</button>
+        <button id="fwd10" type="button">10초 앞으로</button>
+      </div>
+    </div>
+  </div>
+  <div class="row speeds" role="group" aria-label="재생 속도">
+    <button type="button" data-rate="1" aria-pressed="true">1배</button>
+    <button type="button" data-rate="1.5" aria-pressed="false">1.5배</button>
+    <button type="button" data-rate="2" aria-pressed="false">2배</button>
+  </div>
+  <p id="problem" class="problem" hidden></p>
+  <section>
+    <h2>표시한 장면</h2>
+    <p id="marks-note" class="info"></p>
+    <ul id="marks" class="marks"></ul>
+  </section>
+</main>
+<script src="/replay-time.js"></script>
+<script src="/replay.js"></script>
+<script src="/nav.js"></script>
+</body>
+</html>

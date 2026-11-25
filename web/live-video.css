@@ -1,11 +1,38 @@
-.live-box { position: relative; background: #000; border-radius: 8px; overflow: hidden; aspect-ratio: 16 / 9; width: 100%; }
+/* The live video box (bench, /live, /setup) and the /live page. Colours are the tokens of web/site.css (fallbacks for a page without it). */
+.live-box { position: relative; background: #000; border-radius: var(--r-md, 14px); overflow: hidden; aspect-ratio: 16 / 9; width: 100%; }
 .live-box img { width: 100%; height: 100%; object-fit: contain; display: block; }
-.live-empty { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: #cbd5e1; font-size: 1.1rem; }
-.live-page { margin: 0; padding: 12px 16px; background: #0b1220; color: #e5e7eb; font-family: system-ui, "Malgun Gothic", sans-serif; }
+.live-empty { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: var(--c-text-2, #cfdcd2); font-size: 1.05rem; font-weight: 700; }
+.live-page { margin: 0; padding: 12px 16px; background: var(--c-bg, #0b1310); color: var(--c-text, #eef3ee); font-family: var(--font, system-ui, "Malgun Gothic", sans-serif); }
 .live-page header { display: flex; gap: 12px; align-items: baseline; margin-bottom: 8px; }
-.live-page header a { margin-left: auto; color: #93c5fd; }
-#live-state[data-ok="1"] { color: #4ade80; }
-#live-state[data-ok="0"] { color: #fbbf24; }
+.live-page header a { margin-left: auto; color: var(--c-link, #8fd3ff); }
+/* the state word with a coloured dot in front: never the colour alone */
+#live-state::before { content: ""; display: inline-block; width: .6em; height: .6em; margin-right: .3em; border-radius: 50%; background: currentColor; vertical-align: .05em; }
+#live-state:empty::before { display: none; }
+#live-state[data-ok="1"] { color: var(--c-pitch, #40d678); }
+#live-state[data-ok="0"] { color: var(--c-amber, #ff9f43); }
 .bench-live { margin: 0 0 12px; max-width: 720px; }
-.bench-live h2 { font-size: 1rem; margin: 0 0 6px; }
+.bench-live h2 { font-size: 1rem; font-weight: 900; margin: 0 0 6px; }
+.bench-live h2 a { color: var(--c-link, #8fd3ff); }
 .live-empty[hidden], .live-box img[hidden] { display: none; }
+.live-fs { position: absolute; right: 6px; bottom: 6px; z-index: 3; min-width: 44px; min-height: 44px; padding: 0 10px; border: 0; border-radius: var(--r-sm, 9px); background: rgba(11, 19, 16, .72); color: #fff; font: inherit; font-size: .85rem; font-weight: 700; cursor: pointer; }
+.live-box:fullscreen { width: 100vw; height: 100vh; aspect-ratio: auto; border-radius: 0; }
+.live-box:-webkit-full-screen { width: 100vw; height: 100vh; aspect-ratio: auto; border-radius: 0; }
+.live-info { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; padding: 10px 14px; margin-top: 8px; font-size: 1.15rem; font-weight: 700; font-variant-numeric: tabular-nums; background: var(--c-card, #122019); border: 1px solid var(--c-line, #24392c); border-radius: var(--r-md, 14px); }
+.live-info b { color: var(--c-pitch, #40d678); font-weight: 900; }
+/* /live held upright: the video over the whole width, its title a small label on it, the clock and score in one line below. */
+@media (max-width: 640px) {
+  .live-page { padding: 0; }
+  .live-page header { position: absolute; z-index: 2; top: 6px; left: 8px; margin: 0; padding: 2px 10px; border-radius: var(--r-pill, 999px); background: rgba(0, 0, 0, .6); font-size: .72rem; gap: 6px; }
+  .live-page .live-box { border-radius: 0; }
+  .live-page .live-info { margin: 8px 12px 0; }
+}
+/* Held sideways: the whole screen is the video; clock and score are a translucent strip at the top left. */
+@media (orientation: landscape) and (max-height: 500px) {
+  html, body.live-page { height: 100%; overflow: hidden; }
+  body.live-page { padding: 0 !important; }
+  #site-nav { display: none !important; }
+  .live-page header { display: none; }
+  .live-page .live-box { position: fixed; inset: 0; width: 100%; height: 100%; aspect-ratio: auto; border-radius: 0; }
+  .live-page .live-info { position: fixed; top: 6px; left: 8px; z-index: 30; margin: 0; padding: 3px 12px; border: 0; border-radius: var(--r-sm, 9px); background: rgba(11, 19, 16, .72); font-size: 1rem; }
+}
+.live-info b[data-state="before"], .live-info b[data-state="break"], .live-info b[data-state="over"] { color: var(--c-mute, #93a89a); }

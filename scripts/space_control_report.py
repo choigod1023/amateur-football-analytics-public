@@ -152,7 +152,7 @@ def main():
     ny = y + 80
     for text in ('추적된 선수만 계산에 들어갑니다. 한 팀에서 보이는 선수는 보통 10명 안팎이고, 5명 미만이면 그 순간은 계산하지 않았습니다.',
                  '경기장 크기는 보정 값으로 추정한 길이 89m, 폭 62m를 썼습니다. 값이 달라지면 비율이 조금 달라질 수 있습니다.',
-                 '두 번째 카메라 구간(카메라가 바뀐 구간의 골 2개)은 보정이 없어 이 보고서에 들어 있지 않습니다.'):
+                 '두 번째 카메라 구간(28분 45초 골과 열 번째 골)은 보정이 없어 이 보고서에 들어 있지 않습니다.'):
         ny = wrap(d, '· ' + text, 110, ny, W - 220, 24, gap=8) + 8
     pages.append(img)
 
@@ -180,7 +180,7 @@ def main():
     pages.append(img)
 
     # ---- page 4: goals ------------------------------------------------------------------------------------------------------
-    img, d = new_page('득점 직전 12초의 공간 지배', '확인된 득점 중 보정이 있는 장면입니다. 경기 평균과 비교합니다')
+    img, d = new_page('득점 직전 12초의 공간 지배', '확인된 득점 중 보정이 있는 골입니다. 경기 평균과 비교합니다')
     d.text((100, 200), '시각', font=font(24, True), fill=MUTE)
     for label, x0 in (('경기장 전체', 420), ('우리 진영', 760), ('중간', 1000), ('상대 진영', 1240)):
         d.text((x0, 200), label, font=font(24, True), fill=MUTE)
@@ -209,7 +209,7 @@ def main():
     if goal_rows:
         mean_goal = {k: statistics.mean(r[k] for r in goal_rows) for k in goal_rows[0]}
         text = (f'득점 직전 {len(goal_rows)}골의 평균은 경기장 전체 {mean_goal["total"] * 100:.0f}%, 상대 진영 3분의 1 {mean_goal["opponent_third"] * 100:.0f}%로, '
-                f'경기 평균({overall["total"] * 100:.0f}%, {overall["opponent_third"] * 100:.0f}%)과 비교됩니다. 득점 장면이 적어서 차이가 작으면 우연일 수 있으니, 장면 영상으로 함께 확인해 주세요.')
+                f'경기 평균({overall["total"] * 100:.0f}%, {overall["opponent_third"] * 100:.0f}%)과 비교됩니다. 골이 8개뿐이어서 차이가 작으면 우연일 수 있으니, 장면 영상으로 함께 확인해 주세요.')
         wrap(d, text, 100, y, W - 200, 25)
     pages.append(img)
 

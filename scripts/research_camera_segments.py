@@ -1,8 +1,8 @@
-exec(open(__import__('os').path.join(__import__('os').path.dirname(__import__('os').path.abspath(__file__)), 'research_camera_view_classifier.py'), encoding='utf-8').read().split("# references:")[0])
+exec(open(__import__('os').path.join(__import__('os').path.dirname(__import__('os').path.abspath(__file__)), 'research_camera_view_classifier.py')).read().split("# references:")[0])
 import time
 refs = {'cam1': cal['cam1']['ref_token'], 'cam3': cal['cam3']['ref_token']}
 cam2 = [s for s in scenes if s['camera'] == 'cam2']; refs['cam2'] = cam2[0]['token']
-video = os.environ.get('MATCH_VIDEO', 'work/own-match-merged-20261111/match_from_17min.mp4')
+video = __import__('os').environ['FOOTBALL_MATCH_VIDEO']   # the merged match video
 cap = cv2.VideoCapture(video)
 fps = cap.get(cv2.CAP_PROP_FPS); total = cap.get(cv2.CAP_PROP_FRAME_COUNT); dur = total / fps
 print('duration s', round(dur, 1))

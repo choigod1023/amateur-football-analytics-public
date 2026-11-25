@@ -4,9 +4,13 @@ from fastapi.testclient import TestClient
 from app.review_public import create_app
 
 
-def test_root_is_live_dashboard_with_all_assets_and_separate_train(tmp_path):
+def test_root_is_the_page_list_and_the_old_dashboard_opens_with_all_assets(tmp_path):
     client = TestClient(create_app(tmp_path, 'http://example.test'), base_url='http://example.test')
-    page = client.get('/', follow_redirects=False)
+    first = client.get('/', follow_redirects=False)
+    assert first.status_code == 200 and 'location' not in first.headers
+    assert first.text == client.get('/start').text
+    assert 'href="/alerts"' in first.text and 'href="/train"' in first.text
+    page = client.get('/dashboard', follow_redirects=False)
     assert page.status_code == 200
     assert 'location' not in page.headers
     assert 'id="video-player"' in page.text

@@ -115,18 +115,120 @@ def split_teams(colours, min_per_team=MIN_PER_TEAM):
     return result
 
 
-def make_profile(split, own_group, *, note='', source=None, now=None):
-    """The profile of a match after the coach chose group `own_group` (0 or 1, an index into split['groups']) as the own team."""
-    if not split.get('ok') and len(split.get('groups', [])) < 2:
+MAX_GROUPS = 5              # 2026-11-25 colour pick: a sample is split into 2 to MAX_GROUPS colour groups (referee, coats and people off the pitch get their own group)
+MIN_GROUP_SHARE = 0.05      # a group with fewer than this share of the people read (and fewer than MIN_PER_TEAM) is no choice: its people go to 'others'
+
+
+def _kmeans(points, k, seeds=24):
+    """k groups by k-means with medians and many starts, the score capped like _kmeans2 (used for k >= 3; k = 2 keeps _kmeans2 unchanged)."""
+    rng = np.random.default_rng(0)
+    best = None
+    for _ in range(seeds):
+        centres = points[rng.choice(len(points), k, replace=False)].astype(np.float64)
+        for _ in range(30):
+            labels = np.linalg.norm(points[:, None, :] - centres[None], axis=2).argmin(1)
+            moved = np.array([np.median(points[labels == c], axis=0) if (labels == c).any() else centres[c] for c in range(k)])
+            if np.allclose(moved, centres):
+                break
+            centres = moved
+        score = float(np.minimum(np.linalg.norm(points[:, None, :] - centres[None], axis=2).min(1), 25.0).sum())
+        if best is None or score < best[0]:
+            best = (score, centres)
+    return best[1]
+
+
+def _refine(points, centres):
+    """The spread and outlier rounds of split_teams() for any number of groups: (groups [{centre, scale, members}], outlier mask)."""
+    k, n = len(centres), len(points)
+    outlier = np.zeros(n, bool)
+    scales = np.full(k, SCALE_FLOOR)
+    labels = np.zeros(n, int)
+    for _ in range(4):
+        distance = np.linalg.norm(points[:, None, :] - centres[None], axis=2)
+        labels = distance.argmin(1)
+        nearest = distance.min(1)
+        scales = np.array([max(float(np.median(nearest[(labels == c) & ~outlier])) if ((labels == c) & ~outlier).any() else SCALE_FLOOR, SCALE_FLOOR) for c in range(k)])
+        outlier = nearest / scales[labels] > OUTLIER_FACTOR
+        centres = np.array([np.median(points[(labels == c) & ~outlier], axis=0) if ((labels == c) & ~outlier).any() else centres[c] for c in range(k)])
+    groups = [{'centre': centres[c].tolist(), 'scale': float(scales[c]), 'members': [int(i) for i in np.flatnonzero((labels == c) & ~outlier)]} for c in range(k)]
+    return groups, outlier
+
+
+def _separation(a, b):
+    return float(np.linalg.norm(np.array(a['centre']) - np.array(b['centre'])) / (a['scale'] + b['scale']))
+
+
+def min_separation(groups):
+    """The smallest separation (distance in spreads, as split_teams) of any two groups."""
+    return min(_separation(groups[i], groups[j]) for i in range(len(groups)) for j in range(i + 1, len(groups)))
+
+
+def split_teams_multi(colours, min_per_team=MIN_PER_TEAM, max_groups=MAX_GROUPS, min_share=MIN_GROUP_SHARE):
+    """split_teams() with 2 to max_groups colour groups (2026-11-25). The number of groups comes from the sample:
+    1. the two-group split of split_teams() is kept as it is when the live run's bib reader could tell its two groups apart
+       (app/colour_pick.sample_score: hue gap >= 50 degrees and both chromas >= 17.97, the values of app/small_box_team, not changed): 2 groups, as before;
+    2. else (2026-11-25 rehearsal: red bibs merged with dark coats and shaded players into one grey group) for k = 3..max_groups the k-means groups with
+       fewer than max(min_per_team, min_share * people) people move to 'others', and a k that leaves three or more groups is kept when their smallest
+       separation is larger than the smallest separation of every smaller k (the split_teams() result for k = 2).
+    When no k >= 3 does better, the result IS the split_teams() result (same dict, plus 'k': 2).
+    Extra keys: 'k' (number of groups offered), 'min_share_people' (the people limit of a group)."""
+    base = split_teams(colours, min_per_team)
+    base['k'] = len(base['groups'])
+    points = np.asarray(colours, np.float64).reshape(-1, 3)
+    n = len(points)
+    limit = max(min_per_team, int(np.ceil(min_share * n)))
+    base['min_share_people'] = limit
+    if len(base['groups']) < 2:
+        return base
+    from app.colour_pick import sample_score
+    if base.get('ok') and sample_score(base)['on']:
+        return base
+    best, best_sep = base, min_separation(base['groups'])
+    for k in range(3, max_groups + 1):
+        if n < k * min_per_team:
+            break
+        groups, outlier = _refine(points, _kmeans(points, k))
+        big = [g for g in groups if len(g['members']) >= limit]
+        if len(big) < 3:
+            continue
+        separation = min_separation(big)
+        if separation <= best_sep:
+            continue
+        rest = sorted([m for g in groups if len(g['members']) < limit for m in g['members']] + [int(i) for i in np.flatnonzero(outlier)])
+        big.sort(key=lambda g: -len(g['members']))
+        best_sep = separation
+        best = {'ok': True, 'reason': '', 'groups': big, 'others': _group_others(points, rest), 'separation': round(separation, 2),
+                'weak': separation < MIN_SEPARATION, 'k': len(big), 'min_share_people': limit}
+        if best['weak']:
+            best['reason'] = '두 팀의 옷 색이 서로 비슷합니다. 사진을 잘 보고 골라 주세요. 팀이 섞여 보일 수 있습니다.'
+    return best
+
+
+def make_profile(split, own_group, *, note='', source=None, now=None, opponent_group=None):
+    """The profile of a match after the coach chose group `own_group` (an index into split['groups']) as the own team.
+    Two groups: opponent_group is the other one (it may be left out, as before). Three or more groups (split_teams_multi): the coach also chose
+    opponent_group; the groups chosen by nobody (referee, coats) are written to 'others' like the far people (the live run does not use 'others')."""
+    groups = split.get('groups', [])
+    if not split.get('ok') and len(groups) < 2:
         raise ValueError('Two colour groups are needed.')
-    if own_group not in (0, 1):
-        raise ValueError('own_group must be 0 or 1.')
-    own, opponent = split['groups'][own_group], split['groups'][1 - own_group]
+    if len(groups) <= 2 or opponent_group is None:
+        if len(groups) > 2:
+            raise ValueError('opponent_group is needed when there are more than two groups.')
+        if own_group not in (0, 1):
+            raise ValueError('own_group must be 0 or 1.')
+        if opponent_group is not None and opponent_group != 1 - own_group:
+            raise ValueError('opponent_group must be the other group.')
+        opponent_group = 1 - own_group
+    elif not (0 <= own_group < len(groups) and 0 <= opponent_group < len(groups)) or own_group == opponent_group:
+        raise ValueError('own_group and opponent_group must be two different groups.')
+    own, opponent = groups[own_group], groups[opponent_group]
+    unchosen = [g for i, g in enumerate(groups) if i not in (own_group, opponent_group)]
+    separation = split.get('separation') if len(groups) <= 2 else round(_separation(own, opponent), 2)
     return {'version': PROFILE_VERSION, 'created': now or time.strftime('%Y-%m-%dT%H:%M:%S'),
             'own': {'centre': [round(v, 3) for v in own['centre']], 'scale': round(own['scale'], 3), 'people': len(own['members'])},
             'opponent': {'centre': [round(v, 3) for v in opponent['centre']], 'scale': round(opponent['scale'], 3), 'people': len(opponent['members'])},
-            'others': [{'centre': [round(v, 3) for v in g['centre']], 'people': len(g['members'])} for g in split.get('others', [])],
-            'separation': split.get('separation'), 'note': note, 'source': source or {}}
+            'others': [{'centre': [round(v, 3) for v in g['centre']], 'people': len(g['members'])} for g in unchosen + list(split.get('others', []))],
+            'separation': separation, 'note': note, 'source': source or {}}
 
 
 def save_profile(path, profile):

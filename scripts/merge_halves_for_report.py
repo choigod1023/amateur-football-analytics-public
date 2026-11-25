@@ -6,7 +6,7 @@ python scripts/merge_halves_for_report.py --store <review store> --session final
     --h1-seconds 1320 --gap 300 [--h2-end 1500]
 
 The second half starts at second (h1-seconds + gap) of the merged time line, with a {"type":"half"} line before it. Nothing in the inputs is changed; --h2-end drops the seconds of the second half after that
-second of its own video (for instance a part recorded after the match). The session folder must not exist yet.
+second of its own video (for instance a penalty shoot-out). The session folder must not exist yet.
 """
 import argparse
 import json

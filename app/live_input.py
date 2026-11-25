@@ -1,7 +1,7 @@
 """Reading frames from a live source that can drop out: reconnect with growing waits and report the loss, so that 'no alerts' is never mistaken for 'no input'.
 
 `ReconnectingReader` wraps an opener (a function that returns an object with read() and release(), like cv2.VideoCapture). A file that ends is the end of the run; a stream or
-camera that fails is opened again after 1, 2, 4 ... seconds (at most MAX_WAIT) up to `max_retries` times in a row. Every loss and every recovery goes to `notify(kind, text)`
+camera that fails is opened again after 1, 2, 4 ... seconds (at most MAX_WAIT) up to `max_retries` times in a row (with max_wait below MAX_WAIT: until the total wait of that default schedule has been spent). Every loss and every recovery goes to `notify(kind, text)`
 where kind is 'no_input' or 'input_back' (the runner writes both to the alerts file and the banner). An exception of read() or of the opener counts as a failed read.
 """
 import os
@@ -11,7 +11,13 @@ MAX_WAIT = 30.0
 
 
 class ReconnectingReader:
-    def __init__(self, open_source, is_file=False, max_retries=8, base_wait=1.0, notify=None, sleep=time.sleep, clock=time.time, log=print):
+    def __init__(self, open_source, is_file=False, max_retries=8, base_wait=1.0, notify=None, max_wait=MAX_WAIT, sleep=time.sleep, clock=time.time, log=print, give_up_seconds=None):
+        if not max_wait > 0:
+            raise ValueError('max_wait must be above 0 seconds')
+        if give_up_seconds is not None and not give_up_seconds > 0:
+            raise ValueError('give_up_seconds must be above 0 seconds')
+        self.give_up_seconds = give_up_seconds           # None: the old budget (max_retries tries); a number: keep trying until this many seconds have passed since the loss
+        self.max_wait = max_wait
         self.open_source, self.is_file, self.max_retries, self.base_wait = open_source, is_file, max_retries, base_wait
         self.notify, self.sleep, self.clock, self.log = notify or (lambda kind, text: None), sleep, clock, log
         self.capture = None
@@ -44,9 +50,16 @@ class ReconnectingReader:
             return False, None
         lost_at = self.clock()
         self.notify('no_input', 'The video input stopped; trying to connect again.')
-        for attempt in range(self.max_retries):
-            wait = min(MAX_WAIT, self.base_wait * 2 ** attempt)
-            self.log(f'No input; trying again in {wait:.0f} s ({attempt + 1}/{self.max_retries}).')
+        # the budget is the total wait of the default schedule (max_retries tries, waits capped at MAX_WAIT); with a smaller cap we keep trying until that much has been waited
+        budget = sum(min(MAX_WAIT, self.base_wait * 2 ** i) for i in range(self.max_retries))
+        capped = self.max_wait < MAX_WAIT
+        waited, attempt = 0.0, 0
+        limit = self.give_up_seconds
+        while (max(waited, self.clock() - lost_at) < limit) if limit is not None else ((waited < budget) if capped else (attempt < self.max_retries)):
+            wait = min(self.max_wait, self.base_wait * 2 ** min(attempt, 60))
+            waited += wait
+            attempt += 1
+            self.log(f'No input; trying again in {wait:.0f} s (try {attempt}).')
             self.sleep(wait)
             self.release()
             self._open()
@@ -56,7 +69,7 @@ class ReconnectingReader:
                 self.notify('input_back', f'The video input is back after {self.clock() - lost_at:.0f} s.')
                 return True, frame
         self.gave_up = True
-        self.notify('no_input', f'The video input did not come back after {self.max_retries} tries; the run stops.')
+        self.notify('no_input', f'The video input did not come back after {attempt} tries; the run stops.')
         return False, None
 
     def release(self):

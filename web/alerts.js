@@ -6,11 +6,20 @@
   const URGENCY = {box_attack: '급함', conceded_run: '급함', run: '주의', isolated: '참고', line_drop: '참고', gap_wide: '꺼 둔 알림'};
   const rank = kind => { const i = PRIORITY.indexOf(kind); return i < 0 ? PRIORITY.length : i; };
   // Judging sessions made for the person (`label-*`) are work the user has to do first: they go above every coaching alert, in this order, then by name.
-  const LABEL_ORDER = ['label-1121-missed', 'label-1121-newbox', 'label-1121-team'];
+  const LABEL_ORDER = ['label-1123-switch', 'label-1123-role2', 'label-1121-role', 'label-1121-missed', 'label-1121-newbox', 'label-1121-team'];
   const labelRank = s => { const i = LABEL_ORDER.indexOf(s); return i < 0 ? LABEL_ORDER.length : i; };
   const isLabel = s => s.startsWith('label-');
   const labelCompare = (a, b) => labelRank(a) - labelRank(b) || (a < b ? -1 : a > b ? 1 : 0);
   const number = a => parseInt(a.id.slice(a.session.length + 1), 10) || 0;
+  // A name a person can read for a session folder: "label-1121-role" -> "확인 요청 11-21 역할", "match-1120" -> "경기 11-20". Only the text shown changes.
+  const TOPIC = {role: '역할', role2: '역할 2', missed: '놓친 선수', newbox: '새 상자', team: '팀', switch: '팀 바뀜'};
+  const sessionName = s => {
+    let m = /^label-(\d{2})(\d{2})-(.+)$/.exec(s);
+    if (m) return `확인 요청 ${m[1]}-${m[2]} ${TOPIC[m[3]] || m[3]}`;
+    m = /^match-(\d{2})(\d{2})(.*)$/.exec(s);
+    if (m) return `경기 ${m[1]}-${m[2]}${m[3] ? ' ' + m[3].replace(/^-/, '') : ''}`;
+    return s;
+  };
   let data = {alerts: [], stats: [], sessions: []};
   let timer = 0;
 
@@ -40,7 +49,7 @@
     kind.value = keep;
     const session = el('session'), keepSession = session.value;
     const ordered = [...data.sessions.filter(s => isLabel(s.session)).sort((a, b) => labelCompare(a.session, b.session)), ...data.sessions.filter(s => !isLabel(s.session))];
-    session.replaceChildren(new Option('전체', ''), ...ordered.map(s => new Option(`${s.session} (${s.count})`, s.session)));
+    session.replaceChildren(new Option('전체', ''), ...ordered.map(s => new Option(`${sessionName(s.session)} (${s.count})`, s.session)));
     session.value = keepSession;
   }
 
@@ -74,7 +83,7 @@
     const head = text('h3', alert.title || alert.kind);
     if (URGENCY[alert.kind]) head.prepend(text('span', URGENCY[alert.kind], 'urgency u-' + rank(alert.kind)), ' ');
     else if (isLabel(alert.session)) head.prepend(text('span', '먼저', 'urgency u-1'), ' ');
-    side.append(head, text('div', `${alert.session} · ${clock(alert.time)}`, 'when'), text('p', alert.text || ''));
+    side.append(head, text('div', `${sessionName(alert.session)} · ${clock(alert.time)}`, 'when'), text('p', alert.text || ''));
     if (alert.line) side.append(text('p', alert.line, 'lane'));
     if (alert.scene.length || alert.space.length || alert.advice.length) {
       const more = document.createElement('details');
@@ -97,7 +106,7 @@
     }
     const note = document.createElement('div'); note.className = 'note'; note.append(noteInput);
     const saveNote = text('button', '메모 저장', 'ghost'); saveNote.type = 'button';
-    saveNote.addEventListener('click', () => alert.label ? mark(alert, alert.label, noteInput.value, saved) : saved.textContent = '먼저 맞음, 틀림, 쓸모없음 중 하나를 눌러 주세요.');
+    saveNote.addEventListener('click', () => alert.label ? mark(alert, alert.label, noteInput.value, saved) : saved.textContent = '먼저 맞음, 틀림, 쓸모없음 중 하나를 누릅니다.');
     note.append(saveNote);
     side.append(verdict, note, saved);
     root.append(side);

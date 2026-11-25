@@ -1,7 +1,7 @@
 (() => {
   const el = id => document.getElementById(id);
   const STATES = {uploading: '업로드 중', queued: '대기 중', running: '처리 중', done: '완료', failed: '실패', cancelled: '취소됨'};
-  const STEP_LABEL = {detect: '선수 탐지', track: '선수 추적', report: '영상 제작', worker: '작업기'};
+  const STEP_LABEL = {detect: '선수 탐지', track: '선수 추적', report: '영상 제작', worker: '분석 컴퓨터'};
   let jobs = [];
   let timer = 0;
 
@@ -23,14 +23,14 @@
     const response = await fetch(path, {method: 'POST', headers, body: JSON.stringify(body || {}), ...options});
     let data = {};
     try { data = await response.json(); } catch (_) { /* no body */ }
-    if (!response.ok) throw new Error(response.status === 403 ? '접속 토큰이 없거나 맞지 않습니다.' : (typeof data.detail === 'string' ? data.detail : `요청이 실패했습니다 (${response.status})`));
+    if (!response.ok) throw new Error(response.status === 403 ? '업로드 암호가 없거나 맞지 않습니다.' : (typeof data.detail === 'string' ? data.detail : `요청이 실패했습니다 (${response.status})`));
     return data;
   }
 
   function renderHealth(health, uploadEnabled) {
     const worker = el('chip-worker');
     const busy = health.counts.running + health.counts.queued > 0;
-    worker.textContent = !uploadEnabled ? '업로드 꺼짐(토큰 미설정)' : busy ? (health.worker_alive ? '작업기 동작 중' : '작업기 시작 대기') : '작업기 대기';
+    worker.textContent = !uploadEnabled ? '업로드 꺼짐(서버에 암호가 없음)' : busy ? (health.worker_alive ? '분석 컴퓨터 작업 중' : '분석 컴퓨터 시작 기다림') : '분석 컴퓨터 쉬는 중';
     worker.className = 'chip ' + (!uploadEnabled ? 'bad' : 'ok');
     el('chip-queue').textContent = `대기 ${health.counts.queued} · 진행 ${health.counts.running}`;
     el('chip-disk').textContent = `저장공간 ${health.disk_free_gb}GB`;
@@ -67,7 +67,7 @@
     if (state === 'failed' || state === 'cancelled') button('상세', () => openDetail(job), 'ghost');
     if (state === 'queued' || state === 'running') button('취소', () => act('cancel', job, '이 작업을 취소할까요?'), 'danger');
     if (job.can_retry) button('다시 시도', () => act('retry', job));
-    if (state !== 'running' && state !== 'uploading') button('삭제', () => act('delete', job, '리포트와 업로드한 영상을 삭제합니다. 되돌릴 수 없습니다. 계속할까요?'), 'danger');
+    if (state !== 'running' && state !== 'uploading') button('삭제', () => act('delete', job, '보고서와 올린 영상을 지웁니다. 되돌릴 수 없습니다. 지울까요?'), 'danger');
     card.append(actions);
     return card;
   }
@@ -121,7 +121,7 @@
     const movie = job.files.includes('review.mp4') ? 'review.mp4' : 'report.mp4';
     const paper = job.files.includes('review.md') ? 'review.md' : 'report.md';
     if (job.files.includes(movie)) { video.hidden = false; video.src = `/report-files/${job.id}/${movie}`; } else { video.hidden = true; video.removeAttribute('src'); }
-    for (const [file, label] of [[movie, '영상 내려받기'], [paper, '문서 보기'], ['events.json', '장면 데이터'], ['scenes.json', '장면 데이터']]) {
+    for (const [file, label] of [[movie, '영상 내려받기'], [paper, '문서 보기'], ['events.json', '장면 자료'], ['scenes.json', '장면 자료']]) {
       if (!job.files.includes(file)) continue;
       const a = text('a', label); a.href = `/report-files/${job.id}/${file}`; a.target = '_blank'; a.rel = 'noopener'; if (file === movie) a.download = ''; links.append(a);
     }
@@ -133,10 +133,10 @@
     const tabs = el('log-tabs'); tabs.replaceChildren();
     for (const step of ['detect', 'track', 'report', 'worker']) {
       const b = text('button', STEP_LABEL[step], 'ghost'); b.type = 'button';
-      b.addEventListener('click', async () => { try { el('log-body').textContent = (await api('/api/v1/report/log', {job: job.id, step}, true)).text || '(로그가 비어 있습니다)'; } catch (error) { el('log-body').textContent = error.message; } });
+      b.addEventListener('click', async () => { try { el('log-body').textContent = (await api('/api/v1/report/log', {job: job.id, step}, true)).text || '(기록이 비어 있습니다)'; } catch (error) { el('log-body').textContent = error.message; } });
       tabs.append(b);
     }
-    el('log-body').textContent = '접속 토큰을 입력한 뒤 단계를 고르면 로그가 보입니다.';
+    el('log-body').textContent = '업로드 암호를 넣은 뒤 단계를 고르면 기록이 보입니다.';
     dialog.showModal();
   }
   el('detail-close').addEventListener('click', () => { el('detail').close(); el('detail-video').pause(); });
@@ -148,7 +148,7 @@
     const file = el('file').files[0];
     const start = parseTime(el('start').value), end = parseTime(el('end').value);
     if (!file) return say('영상 파일을 고르세요.', 'bad');
-    if (!token()) return say('접속 토큰을 입력하세요.', 'bad');
+    if (!token()) return say('업로드 암호를 넣으세요.', 'bad');
     if (start === null || end === null || end <= start) return say('분석 시작과 끝을 확인하세요(끝이 시작보다 뒤여야 합니다).', 'bad');
     const goalTimes = el('goals').value.split(/[,\s]+/).filter(Boolean).map(parseTime);
     if (goalTimes.some(g => g === null || g < start || g > end)) return say('득점 시각은 분석 구간 안의 시각이어야 합니다.', 'bad');
@@ -162,9 +162,9 @@
     request.upload.onprogress = e => { if (e.lengthComputable) el('bar').value = Math.round(100 * e.loaded / e.total); };
     request.onload = () => {
       el('send').disabled = false; el('bar').hidden = true;
-      if (request.status === 200) { say('업로드가 끝났습니다. 오른쪽 목록에서 진행 상황을 볼 수 있습니다.', 'good'); el('file').value = ''; refresh(); return; }
+      if (request.status === 200) { say('업로드가 끝났습니다. 만든 보고서 목록에서 진행 상황을 봅니다.', 'good'); el('file').value = ''; refresh(); return; }
       let detail = ''; try { detail = JSON.parse(request.responseText).detail; } catch (_) { /* none */ }
-      say(request.status === 403 ? '접속 토큰이 맞지 않습니다.' : request.status === 413 ? '파일이 너무 큽니다(최대 4GB).' : `업로드에 실패했습니다 (${request.status}) ${typeof detail === 'string' ? detail : ''}`, 'bad');
+      say(request.status === 403 ? '업로드 암호가 맞지 않습니다.' : request.status === 413 ? '파일이 너무 큽니다(최대 4GB).' : `업로드에 실패했습니다 (${request.status}) ${typeof detail === 'string' ? detail : ''}`, 'bad');
     };
     request.onerror = () => { el('send').disabled = false; el('bar').hidden = true; say('연결이 끊겼습니다. 네트워크를 확인하고 다시 시도해 주세요.', 'bad'); };
     request.send(file);

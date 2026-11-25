@@ -54,8 +54,8 @@ def _line_drops(back_line_other, change=10.0, within=10):
 
 
 def _box_attacks(paths_team, pitch_length, fps, minimum=3, seconds=2):
-    """Stretches in which at least `minimum` players of the team stand in the penalty area of the goal it attacks for `seconds` seconds. On the confirmed
-    goals of one match this picked out the attack within a few seconds for most of them, which a run in behind never did.
+    """Stretches in which at least `minimum` players of the team stand in the penalty area of the goal it attacks for `seconds` seconds. On the eight confirmed
+    goals of one match this picked out the attack within a few seconds for five of them, which a run in behind never did (0 of 8).
     Returns [(first second, most players in the box)]."""
     counts = {}
     for path in paths_team.values():

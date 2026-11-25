@@ -4,20 +4,32 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
 <title>분석 표시</title>
+<link rel="stylesheet" href="/site.css">
 <link rel="stylesheet" href="/tag.css">
+<style>
+  /* The newest coaching alert in one line, so one person can follow it without leaving this page. */
+  #tag-alert { display: block; margin-top: 8px; padding: 8px 12px; border-radius: var(--r-md); background: var(--c-card-2); border: 1px solid var(--c-line); border-left: 6px solid var(--c-info); color: var(--c-text); text-decoration: none; font-size: 15px; line-height: 1.4; }
+  #tag-alert[hidden] { display: none; }
+  #tag-alert[data-priority="urgent"] { border-left-color: var(--c-red); }
+  #tag-alert[data-priority="notice"] { border-left-color: var(--c-amber); }
+  #tag-alert b { display: block; font-weight: 900; }
+  #tag-alert small { color: var(--c-text-2); }
+  /* The undo message must stay above the half buttons and the bottom tabs. */
+  #toast { bottom: calc(132px + env(safe-area-inset-bottom, 0px)); z-index: 60; }
+</style>
 </head>
-<body>
+<body class="match-day">
 <header>
-  <div><b id="clock">경기 시작 전</b><span id="conn" class="ok">연결됨</span></div>
+  <div><b id="clock" data-match-clock>경기 전</b><b id="tag-score" style="margin:0 10px;font-variant-numeric:tabular-nums"></b><span id="conn" class="ok">연결됨</span></div>
   <div class="marks">
     <button data-kind="start_h1" class="mark">전반 시작</button>
-    <button data-kind="end_h1" class="mark">전반 종료</button>
-    <button data-kind="start_h2" class="mark">후반 시작</button>
     <button data-kind="end_h2" class="mark">후반 종료</button>
   </div>
+  <a id="tag-alert" href="/bench" hidden></a>
 </header>
 
 <main>
+  <p class="note">혼자 할 때는 이 화면 하나로 됩니다. 골을 누르면 점수도 오릅니다.</p>
   <section class="grid">
     <button data-kind="shot_ours" class="ours">우리 슛</button>
     <button data-kind="shot_theirs" class="theirs">상대 슛</button>
@@ -45,14 +57,17 @@
   <h2>기록 <small id="count"></small></h2>
   <div class="tools">
     <select id="filter"><option value="">전체</option><option value="h1">전반</option><option value="h2">후반</option></select>
-    <button id="make-clips">클립 만들기</button>
+    <button id="make-clips">기록한 장면을 영상으로 자르기</button>
   </div>
   <p id="clip-note" class="note"></p>
   <ol id="list"></ol>
-  <p class="note">버튼은 장면이 끝난 직후에 누르세요. 클립은 누른 시각의 20초 전부터 6초 뒤까지 녹화 원본에서 잘라 옵니다. 시각은 서버 기준입니다.</p>
+  <p class="note">장면이 끝난 직후에 누르세요. 누른 시각의 20초 전부터 6초 뒤까지가 클립이 됩니다.</p>
 </main>
 
 <dialog id="player"><video id="video" controls playsinline></video><button id="close">닫기</button></dialog>
+<script src="/match-clock.js"></script>
+<script src="/watch-banner.js"></script>
 <script src="/tag.js"></script>
+<script src="/nav.js"></script>
 </body>
 </html>

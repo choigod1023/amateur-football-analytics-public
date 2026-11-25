@@ -37,7 +37,7 @@ def overlap_share(a, b):
     return width * height / max(1e-6, smaller) if width > 0 and height > 0 else 0.0
 
 
-def detect(model, image, camera, device, confidence=0.20, batch_size=1, half=False, tile_size=768, imgsz=None):
+def detect(model, image, camera, device, confidence=0.20, batch_size=1, half=False, tile_size=768, imgsz=None, far_strip=0.0, strip_tile=256, strip_imgsz=1024, strip_info=None, strip_keep=None):
     """Run unchanged tiles in bounded batches; retain legacy single-image default.
 
     All tiles within one input have the same shape, including small inputs, so
@@ -78,12 +78,82 @@ def detect(model, image, camera, device, confidence=0.20, batch_size=1, half=Fal
             for box, score in values:
                 # Python floats make the small, scalar cross-tile NMS much cheaper.
                 found.append([float(box[0] + x), float(box[1] + y), float(box[2] + x), float(box[3] + y), float(score)])
-    found.sort(key=lambda d: -d[4])
+    kept = merge_boxes(found)
+    if far_strip:
+        # Optional extra pass over the far strip of the pitch part (2026-11-22, off by default: the output is then unchanged). The strip result and the full result are merged
+        # the way the benchmark work/model-improve-1122/detect-small did it: both lists are already merged inside, the union is merged again from the best score down.
+        strip = detect_far_strip(model, image, camera, device, confidence, batch_size, half, far_strip, strip_tile, strip_imgsz, keep=strip_keep)
+        kept = merge_boxes(kept + strip)
+        if strip_info is not None:
+            alive = {id(d) for d in kept}
+            strip_info['strip_only'] = [d for d in strip if id(d) in alive]
+    return kept
+
+
+def merge_boxes(found):
+    """Greedy merge from the best score down: a box that shares more than 60 % of the smaller box with a better one is dropped (the tile merge of the live analysis)."""
     kept = []
-    for d in found:
+    for d in sorted(found, key=lambda d: -d[4]):
         if all(overlap_share(d, k) <= 0.6 for k in kept):
             kept.append(d)
     return kept
+
+
+def strip_filter(min_score=0.0, min_aspect=0.0, drop_seams=False):
+    """Filter for the boxes of the far strip pass (used before the merge): a box is kept when its score is at least min_score, its width is at least min_aspect times its height,
+    and (with drop_seams) it does not touch the left or right seam of its strip tile (such a box shows a person cut in two; the neighbouring tile has the whole person).
+    Returns None when nothing is asked, so that the default path stays exactly as it was. Measured on 11-20 and 11-11 frames: work/model-improve-1122/detect-small/filters_results.json."""
+    if min_score < 0 or min_aspect < 0:
+        raise ValueError('min_score and min_aspect must not be negative')
+    if not (min_score or min_aspect or drop_seams):
+        return None
+
+    def keep(d, x, tile, width):
+        if d[4] < min_score or (d[2] - d[0]) < min_aspect * (d[3] - d[1]):
+            return False
+        return not (drop_seams and ((x > 0 and d[0] <= x + 2) or (x + tile < width and d[2] >= x + tile - 2)))
+    return keep
+
+
+def check_far_strip(fraction, tile, imgsz):
+    if isinstance(fraction, bool) or not isinstance(fraction, (int, float)) or not 0 < fraction <= 1:
+        raise ValueError('far_strip must be a fraction of the pitch part, above 0 and at most 1')
+    if isinstance(tile, bool) or not isinstance(tile, int) or not 64 <= tile <= 1024:
+        raise ValueError('strip_tile must be between 64 and 1024 px')
+    if isinstance(imgsz, bool) or not isinstance(imgsz, int) or not (320 <= imgsz <= 1600) or imgsz % 32:
+        raise ValueError('strip_imgsz must be a multiple of 32 between 320 and 1600')
+
+
+def detect_far_strip(model, image, camera, device, confidence, batch_size, half, fraction, tile, imgsz, keep=None, raw_out=None):
+    """Persons found in the far strip: the top `fraction` of the pitch part of the frame, cut into `tile` px wide tiles (25 % overlap) that are enlarged to `imgsz`."""
+    check_far_strip(fraction, tile, imgsz)
+    height, width = image.shape[:2]
+    top = int(height * PITCH_TOP[camera])
+    band = max(16, int((height - top) * fraction))
+    locations = [(x, top) for x in starts(width, tile, 0.25)]
+    found = []
+    for offset in range(0, len(locations), batch_size):
+        chunk = locations[offset:offset + batch_size]
+        crops = [image[top:top + band, x:x + tile] for x, _ in chunk]
+        source = crops[0] if batch_size == 1 else crops
+        results = model.predict(source, device=device, imgsz=imgsz, conf=confidence, quantize=16 if half else 32, classes=[0], max_det=100, verbose=False)
+        if len(results) != len(chunk):
+            raise RuntimeError('Detector returned a different number of strip results')
+        for (x, y), result in zip(chunk, results):
+            if result.boxes is None:
+                continue
+            if hasattr(result.boxes, 'data'):
+                rows = result.boxes.data.cpu().numpy()
+                values = ((r[:4], r[4]) for r in rows)
+            else:
+                values = zip(result.boxes.xyxy.cpu().numpy(), result.boxes.conf.cpu().numpy())
+            for box, score in values:
+                d = [float(box[0] + x), float(box[1] + y), float(box[2] + x), float(box[3] + y), float(score)]
+                if raw_out is not None:
+                    raw_out.append(d + [x])                       # every strip box before any filter and merge, with the x of its tile (for the offline filter evaluation)
+                if keep is None or keep(d, x, tile, width):
+                    found.append(d)
+    return merge_boxes(found)
 
 
 def shirt_label(cv2, np, image, box, teams=None):

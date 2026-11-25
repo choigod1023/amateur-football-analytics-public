@@ -642,7 +642,7 @@ def clock(t):
 def build(args):
     prev = {'전반': read(args.prev_h1), '후반': read(args.prev_h2)}
     cur = {'전반': read(args.cur_h1), '후반': read(args.cur_h2, end=args.cur_h2_end)}
-    matches = [('지난 경기', prev), ('오늘 경기', cur)]
+    matches = [('지난 경기(11월 11일)', prev), ('오늘 경기(11월 18일)', cur)]
     info = {}
     for mname, halves in matches:
         for hname, data in halves.items():
@@ -654,7 +654,7 @@ def build(args):
                 w['response'] = response(data, w['t'])
             info[(mname, hname)] = {'data': data, 'shape': half_shape(data), 'th': th, 'bx': bx, 'oth': oth, 'obx': obx, 'ow': ow, 'tw': tw, 'space': space_shares(data)}
     out = [f'<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>경기 상세 보고서</title><style>{CSS}</style></head><body><main>']
-    out.append('<h1>두 경기 상세 보고서: 공격 루트, 상대의 공략과 우리의 대처, 공간 싸움</h1><p class="note">같은 우리 팀(어두운 옷)의 두 경기입니다. 오늘 경기와 지난 경기를 비교합니다. 정규 시간 전반과 후반만 봤습니다. 모든 그림은 우리 골대가 왼쪽, 우리가 공격하는 방향이 오른쪽이며, "왼쪽"과 "오른쪽"은 우리 팀 기준입니다.</p>')
+    out.append('<h1>두 경기 상세 보고서: 공격 루트, 상대의 공략과 우리의 대처, 공간 싸움</h1><p class="note">같은 우리 팀(어두운 옷)의 두 경기입니다. 지난 경기는 11월 11일 야간 경기, 오늘 경기는 11월 18일 낮에서 저녁 경기이고 정규 시간 전반과 후반만 봤습니다. 모든 그림은 우리 골대가 왼쪽, 우리가 공격하는 방향이 오른쪽이며, "왼쪽"과 "오른쪽"은 우리 팀 기준입니다.</p>')
 
     # ---- 1 summary
     out.append('<h2>1. 한눈에 보는 요약</h2><div class="card">')

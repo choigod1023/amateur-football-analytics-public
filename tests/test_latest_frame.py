@@ -160,7 +160,7 @@ def test_heartbeat_and_camera_rows_are_status_rows_and_are_not_rated_as_alerts()
         assert record['polarity'] == 'status' and record['title'] and record['text']
 
 
-# ---- Tests of LatestFrameReader
+# ---- Tests of LatestFrameReader from the main branch
 from threading import Event
 import numpy as np
 import pytest

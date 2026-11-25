@@ -8,6 +8,7 @@ description: Use in the main (planning and review) session of the football match
 하위 모델은 지시가 추상적이면 추상적으로 구현합니다. 그래서 주 세션이 경로, 초, 숫자 기준, 통과 조건까지 정해서 보냅니다. 구조 설명은 `wiki/agents/index.md`.
 
 ## 조립 순서
+0. 먼저 `wiki/agents/main-session-checklist.md`의 "지시문을 보내기 전" 묶음 6문항에 답합니다. 하나라도 "아니오"이면 고친 뒤에 1단계로 갑니다. 새 실험이나 개선이면 `wiki/experiment-ledger.md`와 `git branch -a`에서 같은 주제를 먼저 찾습니다(L42).
 1. `wiki/agents/index.md`의 작업 종류표에서 카드와 모델을 고릅니다. 카드가 없으면 브리프 끝에 "카드 없음"을 적고, 끝난 뒤 카드 만들기 작업을 따로 보냅니다.
 2. `wiki/agents/brief-template.md`의 11개 절을 순서대로 채웁니다. 카드에 있는 일반 절차는 옮겨 적지 않고 "카드 3~5단계를 따름"처럼 가리킵니다.
 3. 카드의 "자주 틀리는 것" 교훈 번호를 `wiki/agents/lessons.md`에서 찾아, 번호와 규칙 한 줄을 "하지 말 것"이나 "판정 기준"에 넣습니다.

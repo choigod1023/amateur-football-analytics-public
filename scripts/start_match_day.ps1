@@ -1,6 +1,6 @@
 <#
   Match day start: the SRT receiver (MediaMTX through app.plaintext_demo srt) and the recorder loop, each only when it is not running yet,
-  then a check of the review server (started at logon by the task <SCHEDULED_TASK>) and the addresses to open.
+  then a check of the review server (started at logon by the task FootballReviewServer) and the addresses to open.
   It only starts the existing programs the same way as on 2026-11-18; it changes no streaming or recording setting.
   Usage: powershell -NoProfile -ExecutionPolicy Bypass -File scripts\start_match_day.ps1 [-MatchName match-20261120] [-DryRun]
 #>
@@ -8,7 +8,8 @@ param(
     [string]$MatchName = ('match-' + (Get-Date -Format 'yyyyMMdd')),
     [switch]$DryRun
 )
-$base = Split-Path -Parent (Split-Path -Parent $PSScriptRoot)  # folder that holds this repository and football-coach-server
+$base = $env:FOOTBALL_OUTPUTS_DIR   # the folder that holds football-coach-server
+if (-not $base) { throw 'Set FOOTBALL_OUTPUTS_DIR to the folder that holds football-coach-server.' }
 $server = Join-Path $base 'football-coach-server'
 $python = Join-Path $server '.venv\Scripts\python.exe'
 $recordScript = Join-Path $PSScriptRoot 'record_stream_loop.ps1'
@@ -37,6 +38,5 @@ else {
 # 3. Review server
 Say ('review server on 8443 listening: {0}' -f (Listening 8443))
 Say 'Moblin: send to srt://<public address>:8890 as on 2026-11-18'
-$serverHost = if ($env:REVIEW_SERVER_HOST) { $env:REVIEW_SERVER_HOST } else { '<SERVER_HOST>' }
-Say "Phone: http://${serverHost}:8443/tag (analyst buttons), /bench (coach screen), /live (video)"
+Say 'Phone: http://<server address>:8443/tag (analyst buttons), /bench (coach screen), /live (video)'
 Say 'After the match: python scripts\cut_halves_from_tags.py --store <review store> --day <date> --out-dir <folder> --small'

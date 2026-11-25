@@ -1,0 +1,133 @@
+/* One design for every page of the review server (2026-11-25): the look of the final's phone preview (work/match-1125/preview) and of the
+   half-time report (web/halftime.css). Dark green night, chalk text, yellow number marks, green pills, red for warnings. Nothing is loaded from outside.
+   Part 1: tokens (:root).  Part 2: shared parts (.ds-*).  Part 3: defaults of the after-match pages (alerts, report, train, shots, cards, players, events, ball, comparison scenes, replay).
+   Match-day pages (bench, setup, tag, start, live, watch, half-time) load this file FIRST and their own file after it, and mark <body class="match-day"> so that part 3 leaves them alone.
+   After-match pages load it LAST so that part 3 wins over the older page styles (style.css, report.css, alerts.css, shots.css, differences.css).
+   Token table and rules: wiki/features/design-system-1125.md. */
+
+/* ---- Part 1: tokens ------------------------------------------------------------------------------------------------------------------ */
+:root {
+  color-scheme: dark;
+  /* colours: grounds */
+  --c-bg: #0b1310;        /* page (night) */
+  --c-card: #122019;      /* card */
+  --c-card-2: #18291f;    /* card inside a card, secondary button */
+  --c-field: #0e1913;     /* input field */
+  --c-line: #24392c;      /* card border */
+  --c-line-2: #3b5a47;    /* stronger border: buttons, inputs */
+  /* colours: text */
+  --c-text: #eef3ee;      /* body text (chalk) */
+  --c-text-2: #cfdcd2;    /* second text */
+  --c-mute: #93a89a;      /* faint text, evidence lines */
+  /* colours: accents */
+  --c-pitch: #40d678;     /* green: ours, ok, primary button, pill */
+  --c-lamp: #ffcd28;      /* yellow: number marks, what to look at, the next step */
+  --c-red: #f05454;       /* red: warning, danger, the other team */
+  --c-red-ink: #ff7272;   /* red for text and outlines on a dark ground (the red itself is too dark there) */
+  --c-amber: #ff9f43;     /* orange: needs care soon */
+  --c-info: #8fa396;      /* grey-green: for information */
+  --c-link: #8fd3ff;      /* links */
+  --c-on-accent: #0b1310; /* text on a coloured ground */
+  --c-white: #ffffff;
+  --c-alarm: #c0161b;     /* the red band (analysis stopped) */
+  --c-alarm-2: #7d0d11;   /* the red band, dark end of the pulse */
+  --c-pitch-soft: #163a27; --c-red-soft: #3a1618; --c-lamp-soft: #3a3313; --c-amber-soft: #3a2614;
+  /* mini-map (web/halftime.js) */
+  --c-grass: #1c4a31; --c-chalkline: #cfe3d4;
+  /* shape */
+  --r-sm: 9px; --r-md: 14px; --r-lg: 18px; --r-pill: 999px;
+  --bd: 1px solid var(--c-line);
+  --sh-card: 0 1px 0 rgba(255, 255, 255, .03) inset;
+  --sh-float: 0 -8px 24px rgba(0, 0, 0, .45);
+  /* space */
+  --s-1: 4px; --s-2: 8px; --s-3: 12px; --s-4: 16px; --s-5: 22px; --s-6: 32px;
+  /* type */
+  --font: "Noto Sans KR", system-ui, "Malgun Gothic", "Apple SD Gothic Neo", sans-serif;
+  --fs-xs: 13px; --fs-sm: 14.5px; --fs-md: 16px; --fs-lg: 18px;
+  --fs-xl: clamp(20px, 5.4vw, 26px); --fs-2xl: clamp(26px, 7vw, 40px); --fs-num: clamp(40px, 12vw, 72px);
+  --tap: 44px;
+
+  /* the older names, kept so that every page file follows the tokens */
+  --bg: var(--c-bg); --panel: var(--c-card); --panel-2: var(--c-card-2); --field: var(--c-field); --sel: #1d3a2a;
+  --line: var(--c-line); --line-2: var(--c-line-2);
+  --text: var(--c-text); --text-2: var(--c-text-2); --muted: var(--c-mute);
+  --ok: var(--c-pitch); --notice: var(--c-amber); --urgent: var(--c-red); --info: var(--c-info); --link: var(--c-link); --focus: var(--c-lamp);
+  /* the names of web/halftime.css */
+  --night: var(--c-bg); --panel2: var(--c-card-2); --chalk: var(--c-text); --mute: var(--c-mute);
+  --pitch: var(--c-pitch); --red: var(--c-red); --lamp: var(--c-lamp); --grass: var(--c-grass); --chalkline: var(--c-chalkline);
+  --display: var(--font); --body: var(--font);
+}
+
+/* ---- Part 2: shared parts --------------------------------------------------------------------------------------------------------------- */
+/* card */
+.ds-card { background: var(--c-card); border: var(--bd); border-radius: var(--r-lg); padding: var(--s-4); box-shadow: var(--sh-card); display: grid; gap: var(--s-3); min-width: 0; }
+.ds-card.is-inner { background: var(--c-card-2); border-radius: var(--r-md); padding: var(--s-3); }
+/* section head: yellow number mark + title */
+.ds-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin: 0; }
+.ds-head h2, .ds-head h3 { margin: 0; font-family: var(--font); font-weight: 900; font-size: var(--fs-xl); line-height: 1.25; color: var(--c-text); }
+.ds-no { display: inline-block; min-width: 28px; padding: 0 6px; border-radius: var(--r-sm); background: var(--c-lamp); color: var(--c-on-accent); font-weight: 900; font-size: 15px; line-height: 28px; text-align: center; font-variant-numeric: tabular-nums; }
+.ds-no.is-done { background: var(--c-pitch); }
+/* pill */
+.ds-pill { display: inline-flex; align-items: center; gap: 6px; padding: 3px 14px; border-radius: var(--r-pill); background: var(--c-pitch); color: var(--c-on-accent); font-weight: 900; font-size: 15px; line-height: 1.4; white-space: nowrap; }
+.ds-pill.is-warn { background: var(--c-amber); } .ds-pill.is-alarm { background: var(--c-red); } .ds-pill.is-info { background: var(--c-info); } .ds-pill.is-lamp { background: var(--c-lamp); }
+/* state: a coloured dot with a short word, never the colour alone */
+.ds-dot { display: inline-block; width: 12px; height: 12px; border-radius: 50%; background: var(--c-info); flex: none; }
+.ds-dot.is-ok { background: var(--c-pitch); } .ds-dot.is-warn { background: var(--c-amber); } .ds-dot.is-alarm { background: var(--c-red); }
+/* buttons: one primary per screen, secondary for the rest, danger for what stops or deletes */
+.ds-btn { font: inherit; font-weight: 700; font-size: var(--fs-md); min-height: var(--tap); padding: 0 var(--s-4); border-radius: var(--r-md); border: 1px solid var(--c-line-2); background: var(--c-card-2); color: var(--c-text); cursor: pointer; touch-action: manipulation; }
+.ds-btn.is-primary { background: var(--c-pitch); border-color: var(--c-pitch); color: var(--c-on-accent); font-weight: 900; }
+.ds-btn.is-danger { background: transparent; border: 2px solid var(--c-red-ink); color: var(--c-red-ink); }
+.ds-btn:disabled { opacity: .45; cursor: default; }
+/* input */
+.ds-input { font: inherit; font-size: var(--fs-md); min-height: var(--tap); padding: 0 var(--s-3); border-radius: var(--r-md); border: 1px solid var(--c-line-2); background: var(--c-field); color: var(--c-text); }
+/* evidence line: small and faint */
+.ds-proof { margin: 0; font-size: var(--fs-xs); color: var(--c-mute); line-height: 1.5; }
+.ds-num { font-variant-numeric: tabular-nums; }
+
+/* ---- Part 3: defaults of the after-match pages ------------------------------------------------------------------------------------------------ */
+html { -webkit-text-size-adjust: 100%; }
+body { background: var(--bg) !important; color: var(--text); font-family: var(--font); word-break: keep-all; overflow-wrap: anywhere; }
+:where(body:not(.match-day)) :is(button, input, select, textarea) { font-family: inherit; }
+:where(body:not(.match-day)) a { color: var(--link); }
+:where(body:not(.match-day)) :focus-visible { outline: 2px solid var(--c-lamp); outline-offset: 2px; }
+
+/* Page head: a way back to the page list, the page name, one line on what to do. */
+header.site-head { display: grid; gap: 2px; height: auto; max-width: 1280px; margin: 0 auto; padding: 10px 16px 4px; border: 0; background: none; position: static; justify-content: stretch; align-items: start; }
+header.site-head .back { display: inline-flex; align-items: center; min-height: var(--tap); width: max-content; color: var(--c-lamp); text-decoration: none; font-weight: 700; font-size: 1rem; }
+header.site-head h1 { margin: 0; font-size: var(--fs-xl); line-height: 1.25; font-weight: 900; letter-spacing: 0; color: var(--text); }
+header.site-head p { margin: 2px 0 0; color: var(--muted); font-size: 1rem; line-height: 1.45; }
+header.site-head .wide-only { color: var(--notice); font-size: .95rem; }
+@media (min-width: 900px) { header.site-head .wide-only { display: none; } }
+
+/* Status chips under the head (counts). */
+.site-chips { display: flex; flex-wrap: wrap; gap: 6px; max-width: 1280px; margin: 4px auto 0; padding: 0 16px; }
+.site-chips .chip { background: var(--panel-2); color: var(--text-2); border-radius: var(--r-pill); padding: 4px 12px; font-size: .9rem; border: 1px solid var(--c-line); }
+.site-chips a.chip { display: inline-flex; align-items: center; min-height: var(--tap); padding: 0 16px; color: var(--c-lamp); text-decoration: none; font-weight: 700; border: 1px solid var(--line-2); }
+
+/* Controls: at least 44 px high, readable type. */
+:where(body:not(.match-day)) :is(button, select, input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=color]), textarea) {
+  min-height: var(--tap); font-size: 1rem;
+}
+:where(body:not(.match-day)) input[type=file] { padding: 8px; }
+/* Boxes drawn over a picture are buttons too; they keep the size the script gives them. */
+.manual-box, .manual-boxes button { min-height: 0 !important; font-size: 11px; }
+:where(body:not(.match-day)) :is(select, input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=color]), textarea) {
+  background: var(--field); color: var(--text); border: 1px solid var(--line-2); border-radius: 10px;
+}
+:where(body:not(.match-day)) button { border-radius: 10px; }
+:where(body:not(.match-day)) :is(input[type=checkbox], input[type=radio]) { width: 22px; height: 22px; accent-color: var(--ok); vertical-align: middle; }
+:where(body:not(.match-day)) summary { min-height: var(--tap); display: list-item; padding: 10px 0; cursor: pointer; }
+:where(body:not(.match-day)) label:has(> input[type=checkbox]) { display: inline-flex; align-items: center; gap: 8px; min-height: var(--tap); }
+
+/* A wide table scrolls by itself instead of the page. */
+.table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; max-width: 100%; }
+
+/* The bottom tab bar (web/nav.js) must not cover floating panels. */
+body.has-nav .calib-hud { bottom: 76px; }
+
+/* Phones: one column, a little less padding, nothing wider than the screen. */
+@media (max-width: 640px) {
+  header.site-head { padding: 6px 12px 2px; }
+  .site-chips { padding: 0 12px; }
+  :where(body:not(.match-day)) :is(img, video, canvas, svg) { max-width: 100%; }
+}

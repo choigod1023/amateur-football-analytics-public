@@ -9,8 +9,8 @@
   server.json (kept outside Git, it names a token file but never holds the token itself):
     {
       "store": "C:\\...\\public-own-match-review-20261111",
-      "origin": "http://<SERVER_HOST>:8443",
-      "bind": "<LAN_HOST>",
+      "origin": "http://203.0.113.10:8443",
+      "bind": "192.168.0.10",
       "port": 8443,
       "python": "C:\\...\\.venv\\Scripts\\python.exe",
       "token_file": "C:\\...\\upload-token.txt",
@@ -57,6 +57,8 @@ if (-not $NoBackup) {
     $target = Join-Path $config.backups ('store-' + (Get-Date -Format 'yyyyMMdd-HHmmss'))
     New-Item -ItemType Directory -Force -Path $target | Out-Null
     robocopy $config.store $target /E /NFL /NDL /NJH /NJS /NP | Out-Null
+    if ($LASTEXITCODE -ge 8) { throw "Backup copy failed (robocopy exit code $LASTEXITCODE); the server was not started." }
+    $global:LASTEXITCODE = 0     # robocopy 1 to 7 only say what was copied; do not hand that on as the exit code of this script
     $before = (Get-ChildItem $config.store -Recurse -File).Count
     $after = (Get-ChildItem $target -Recurse -File).Count
     if ($before -ne $after) { throw "Backup incomplete ($after of $before files); the server was not started." }

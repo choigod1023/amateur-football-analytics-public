@@ -1,7 +1,7 @@
-"""Add the known goal moments of a match to the shot candidates (their team is not recorded, the reviewer says it on the /shots page).
+"""Add the known goal moments of the match of 2026-11-11 to the shot candidates (their team is not recorded, the reviewer says it on the /shots page).
 
 python scripts/add_goal_candidates.py --store <review store> --video match.mp4 --positions-h1 p1.jsonl --positions-h2 p2.jsonl --ffmpeg ffmpeg.exe
-Goal times (video seconds) go into GOALS below (empty in this public copy). Goals are often missing from the candidates of the box-entry waves, so they are added by hand.
+Goal times (video seconds) are those of wiki/match-facts.md. The candidates from the box-entry waves did not contain most of them (only one of the eight lies within 20 s of a candidate).
 """
 import argparse
 import json
@@ -12,7 +12,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import build_detailed_report as R  # noqa: E402
 
-GOALS = {'전반': [], '후반': []}   # goal moments of the match in video seconds, per half
+GOALS = {'전반': [162, 551, 648], '후반': [2028, 2137, 2397, 2629, 2843]}
 
 
 def main():

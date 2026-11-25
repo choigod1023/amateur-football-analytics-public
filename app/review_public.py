@@ -20,11 +20,14 @@ from app.ball_review import BallReview
 from app.event_review import EventReview
 from app.alert_review import AlertReview
 from app.bench_view import BenchView
+from app.score_board import install as install_score_board
 from app.service_routes import install as install_service_watch
 from app.team_select_routes import install as install_team_select
 from app.live_video_routes import install as install_live_video
+from app.setup_routes import install as install_setup
 from app.shot_routes import install as install_shots
 from app.analyst_tags import install as install_analyst_tags
+from app.replay_routes import install as install_replay
 from app.difference_review import DifferenceReview
 from app.player_identity import PlayerIdentity
 from app.position_slots import POSITION_TEXT
@@ -218,7 +221,9 @@ def create_app(directory, origin, static_dir=None):
                       '/players': 'players.html', '/players.js': 'players.js',
                       '/cards': 'cards.html', '/cards.js': 'cards.js',
                       '/ball': 'ball.html', '/ball.js': 'ball.js', '/ball-verify.js': 'ball-verify.js',
-                      '/style.css': 'style.css'}
+                      '/style.css': 'style.css',
+                      '/start': 'start.html', '/nav.js': 'nav.js', '/site.css': 'site.css',
+                      '/dashboard': 'index.html'}
     for filename in ('api-auth.js', 'freshness.js', 'teams.js', 'pitch.js',
                      'app.js', 'sequences.js', 'manual-confirmation.js',
                      'live-bookmarks.js', 'live-video.js', 'minimap-motion.js', 'match-roster.js'):
@@ -233,12 +238,14 @@ def create_app(directory, origin, static_dir=None):
         response = await call_next(request)
         response.headers.setdefault('Cache-Control', 'no-store')
         response.headers['X-Content-Type-Options'] = 'nosniff'
-        response.headers['Content-Security-Policy'] = "default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; connect-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'"
+        response.headers['Content-Security-Policy'] = "default-src 'self'; img-src 'self' data:; media-src 'self' blob:; style-src 'self' 'unsafe-inline'; connect-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'"      # media-src blob: = hls.js feeds the video through MediaSource
         return response
 
     @app.get('/')
     def index():
-        return FileResponse(root / 'index.html')
+        # The first address shows the page list (web/start.html). The old live dashboard (web/index.html) calls
+        # analysis routes this server does not have; it stays reachable at /dashboard.
+        return FileResponse(root / 'start.html')
 
     @app.get('/api/v1/status')
     def live_status():
@@ -529,10 +536,13 @@ def create_app(directory, origin, static_dir=None):
         return FileResponse(path, media_type='image/jpeg', headers={'Cache-Control': 'private, max-age=3600'})
 
     install_service_watch(app, directory, root)         # /watch, /halftime and their APIs (outage watch and half-time report)
+    install_score_board(app, directory, root)               # /score.js and /api/v1/score (the score board of the bench screen)
     install_shots(app, directory, root)                 # /shots: a person tags what happened in the box moments of a match; xG (app/shot_routes.py)
     install_analyst_tags(app, directory, root)          # /tag: the analyst presses a button at a moment of the match; clips from the recordings (app/analyst_tags.py)
+    install_replay(app, directory, root)                # /replay: watch a recorded match from any moment (app/replay_routes.py)
     install_live_video(app, root)                       # /live and /live-video.mjpg: the incoming stream as a picture (app/live_video_routes.py)
     install_team_select(app, directory, root)         # /team-select: the coach says once which colour group is the own team (app/team_select_routes.py)
+    install_setup(app, directory, root)               # /setup: match preparation from one phone page; there is no operation password (the owner decided so), see the safety note of app/setup_routes.py
 
     @app.get('/{name:path}')
     def static(name: str):

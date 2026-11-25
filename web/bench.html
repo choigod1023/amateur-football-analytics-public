@@ -5,9 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex">
 <title>벤치 화면</title>
+<link rel="stylesheet" href="/site.css">
 <link rel="stylesheet" href="/bench.css">
 </head>
-<body>
+<body class="match-day">
 <header class="band" id="band" role="status" aria-live="polite">
   <span class="dot" id="band-dot" aria-hidden="true"></span>
   <strong id="band-state">연결 중</strong>
@@ -15,6 +16,17 @@
   <span class="spacer"></span>
   <span id="band-link"></span>
 </header>
+
+<section class="score" id="score" aria-label="점수판">
+  <div class="score-top"><span class="score-clock" id="score-clock" data-match-clock>경기 전</span><span class="score-note" id="score-note"></span></div>
+  <div class="score-line" id="score-line" role="status" aria-live="polite">우리 <b id="score-ours">-</b> : <b id="score-opp">-</b> 상대</div>
+  <div class="score-btns">
+    <button type="button" id="score-btn-ours">우리 골</button>
+    <button type="button" id="score-btn-opp">상대 골</button>
+    <button type="button" id="score-btn-undo" disabled>취소</button>
+  </div>
+  <div id="score-cand"></div>
+</section>
 
 <link rel="stylesheet" href="/live-video.css">
 <main>
@@ -28,19 +40,25 @@
     <div class="alert" id="alert" hidden>
       <div class="meta"><span class="badge" id="badge"></span><span class="age" id="age"></span></div>
       <h1 id="title"></h1>
-      <p class="line" id="line"></p>
-      <p class="proof" id="proof"></p>
+      <div id="pic-slot"></div>
+      <div class="foot"><p class="proof" id="proof"></p>
+      <details class="more" id="more"><summary>자세히</summary><p class="more-title" id="full-title"></p><p class="line" id="line"></p></details></div>
     </div>
   </section>
 
   <section class="recent" aria-labelledby="recent-title">
-    <h2 id="recent-title">이전 알림</h2>
+    <details class="fold" id="recent-fold"><summary><h2 id="recent-title">이전 알림</h2></summary>
     <ol id="recent"></ol>
+    </details>
   </section>
 </main>
+<script src="/match-clock.js"></script>
 <script src="/watch-banner.js"></script>
 <script src="/bench.js"></script>
 <script src="/bench-extra.js"></script>
+<script src="/score.js"></script>
+<script src="/live-hls.js"></script>
 <script src="/live-video-view.js"></script>
+<script src="/nav.js"></script>
 </body>
 </html>

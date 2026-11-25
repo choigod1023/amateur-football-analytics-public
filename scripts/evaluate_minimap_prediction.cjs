@@ -1,5 +1,5 @@
 const fs=require('fs'),vm=require('vm'),cp=require('child_process');
-const context={module:{exports:{}}};vm.runInNewContext(cp.execFileSync('git',['show',(process.env.BASELINE_COMMIT||'HEAD')+':web/minimap-motion.js'],{encoding:'utf8'}),context);
+const context={module:{exports:{}}};vm.runInNewContext(cp.execFileSync('git',['show','88f63ad:web/minimap-motion.js'],{encoding:'utf8'}),context);
 const Old=context.module.exports,New=require('../web/minimap-motion.js');
 const out=process.argv[2],input=process.argv[3];
 const frames=JSON.parse(fs.readFileSync(input));

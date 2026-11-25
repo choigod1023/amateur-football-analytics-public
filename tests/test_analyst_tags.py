@@ -95,3 +95,59 @@ def test_clip_is_cut_across_two_recording_pieces(tmp_path):
         assert tag_clips.clip_for(start.timestamp() - 3600, tmp_path / 'rec', ffmpeg, tmp_path / 'none.mp4') == 'no-recording'
     finally:
         tag_clips.DEFAULT_LENGTH = 600.0
+
+
+def _tags(*marks):
+    return analyst_tags.fold([{'op': 'add', 'id': f'm{i}', 'kind': kind, 'epoch': epoch} for i, (kind, epoch) in enumerate(marks)])
+
+
+def test_match_clock_follows_the_newest_mark():
+    now = time.time()
+    kickoff = now - 754.0
+    # no mark: before the match
+    assert analyst_tags.match_clock({}, now)['state'] == 'before'
+    # the 4 marks in turn
+    c = analyst_tags.match_clock(_tags(('start_h1', kickoff)), now)
+    assert c['state'] == 'h1' and abs(now - c['since'] - 754.0) < 0.01 and c['marks'] == ['start_h1']
+    c = analyst_tags.match_clock(_tags(('start_h1', now - 1400), ('end_h1', now - 100)), now)
+    assert c['state'] == 'break' and c['since'] is None
+    c = analyst_tags.match_clock(_tags(('start_h1', now - 1400), ('end_h1', now - 500), ('start_h2', now - 190)), now)
+    assert c['state'] == 'h2' and abs(now - c['since'] - 190.0) < 0.01          # the second half counts from its own kickoff
+    c = analyst_tags.match_clock(_tags(('start_h1', now - 3000), ('end_h1', now - 2000), ('start_h2', now - 1900), ('end_h2', now - 5)), now)
+    assert c['state'] == 'over' and c['marks'] == ['start_h1', 'end_h1', 'start_h2', 'end_h2']
+    # no length of a half is built in: 70 minutes of first half just keep counting
+    assert analyst_tags.match_clock(_tags(('start_h1', now - 4200)), now)['state'] == 'h1'
+
+
+def test_match_clock_starts_again_with_a_new_match_and_ignores_other_days():
+    now = time.time()
+    tags = _tags(('start_h1', now - 3000), ('end_h1', now - 2000), ('start_h2', now - 1900), ('end_h2', now - 600))
+    assert analyst_tags.match_clock(tags, now, started=now - 3500)['state'] == 'over'
+    c = analyst_tags.match_clock(tags, now, started=now - 300)                    # a new match was started after the marks of the first one
+    assert c['state'] == 'before' and c['marks'] == []
+    assert analyst_tags.match_clock(_tags(('start_h1', now - 86400 * 2)), now)['state'] == 'before'
+    # the marks of the new match count again from its own kickoff
+    tags = _tags(('end_h2', now - 600), ('start_h1', now - 60))
+    c = analyst_tags.match_clock(tags, now, started=now - 300)
+    assert c['state'] == 'h1' and abs(now - c['since'] - 60.0) < 0.01 and c['marks'] == ['start_h1']
+
+
+def test_clock_route_is_the_same_for_marks_from_the_tag_page_and_from_the_bar_below(tmp_path):
+    c = client(tmp_path)
+    assert c.get('/match-clock.js').status_code == 200
+    assert c.get('/api/v1/clock').json()['state'] == 'before'
+    # 전반 시작 pressed on /tag, 전반 끝 and 후반 시작 on the bar below (the bar posts the same tags), 후반 종료 on /tag
+    for kind, state in (('start_h1', 'h1'), ('end_h1', 'break'), ('start_h2', 'h2'), ('end_h2', 'over')):
+        c.post('/api/v1/analyst-tags', json={'kind': kind})
+        got = c.get('/api/v1/clock').json()
+        assert got['state'] == state, (kind, got)
+    assert got['marks'] == ['start_h1', 'end_h1', 'start_h2', 'end_h2']
+    # a new match (match.json of /setup, created now) brings "경기 전" back; the old marks stay in the file
+    setup = tmp_path / 'service' / 'setup'
+    setup.mkdir(parents=True)
+    (setup / 'match.json').write_text(json.dumps({'name': 'match-test', 'created': time.strftime('%Y-%m-%dT%H:%M:%S', time.localtime(time.time() + 2))}), encoding='utf-8')
+    assert c.get('/api/v1/clock').json()['state'] == 'before'
+    assert len(c.get('/api/v1/analyst-tags').json()['items']) == 4
+    c.post('/api/v1/analyst-tags', json={'kind': 'start_h1', 'at': time.time() + 3})
+    got = c.get('/api/v1/clock').json()                                           # the first mark after the start of the new match (pressed 3 s ahead of the clock of the file) counts
+    assert got['state'] == 'h1' and got['marks'] == ['start_h1']

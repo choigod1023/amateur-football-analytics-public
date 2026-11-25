@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>경기 준비</title>
+<link rel="stylesheet" href="/site.css">
+<link rel="stylesheet" href="/setup.css">
+</head>
+<body class="match-day">
+<main>
+  <header>
+    <h1>경기 준비</h1>
+    <p>킥오프 30분 전 워밍업 때 1번 묶음을 끝내고, 킥오프 직전에 2번, 휘슬이 울리면 3번을 누르세요. 끝난 단계는 ✓로 바뀝니다.</p>
+  </header>
+
+  <div class="video"><img id="video" alt="휴대폰 송출 영상"><span id="video-none">영상 없음</span></div>
+
+  <section id="restart-box" class="card problem" hidden>
+    <h2 id="restart-title">분석이 꺼졌습니다</h2>
+    <p>"분석 다시 시작"을 누르면 같은 경기로 이어집니다(점수와 기록 그대로).</p>
+    <button id="restart" class="big" type="button">분석 다시 시작</button>
+    <p id="restart-msg" class="msg" role="status"></p>
+  </section>
+
+  <div id="groups"></div>
+</main>
+<script src="/live-hls.js"></script>
+<script src="/setup.js"></script>
+<script src="/nav.js"></script>
+</body>
+</html>

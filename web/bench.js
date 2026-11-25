@@ -32,14 +32,17 @@
   function renderAlert() {
     const current = last && last.current;
     el('empty').hidden = !!current; el('alert').hidden = !current;
+    el('empty').textContent = (last && last.quiet) || '아직 알림이 없습니다';
     const box = el('current');
     box.dataset.priority = current ? current.priority : '';
     if (!current) { box.classList.remove('stale'); return; }
     el('badge').textContent = current.priority_text;
     const age = ageOf(current);
     el('age').textContent = clock(age) + (current.age_estimated ? ' (이전에 나온 알림, 시간 추정)' : '');
-    el('title').textContent = current.title;
+    el('title').textContent = current.line || current.title;                // the short line; the full words stay under "자세히"
+    el('full-title').textContent = current.line && current.line !== current.title ? current.title : '';
     el('line').textContent = current.text;
+    el('more').hidden = !current.text && !el('full-title').textContent;
     const proof = el('proof');
     proof.textContent = current.accuracy ? `이 종류의 알림: ${current.accuracy.text}` : '';
     proof.className = 'proof' + (current.accuracy && current.accuracy.low_sample ? ' low' : '');
@@ -48,12 +51,13 @@
 
   function renderRecent() {
     const list = el('recent');
+    el('recent-title').textContent = `이전 알림 ${((last && last.recent) || []).length}개`;
     list.replaceChildren();
     for (const alert of (last && last.recent) || []) {
       const item = document.createElement('li');
       item.dataset.priority = alert.priority;
-      const title = document.createElement('b'); title.textContent = `${alert.priority_text} · ${alert.title}`;
-      const small = document.createElement('small'); small.textContent = `${clock(ageOf(alert))} · ${alert.text}`;
+      const title = document.createElement('b'); title.textContent = `${alert.priority_text} · ${alert.line || alert.title}`;     // one line per alert
+      const small = document.createElement('small'); small.textContent = clock(ageOf(alert));
       item.append(title, small);
       list.append(item);
     }
@@ -65,7 +69,9 @@
     try {
       const response = await fetch('/api/v1/bench', { cache: 'no-store' });
       if (!response.ok) throw new Error(String(response.status));
-      last = await response.json(); receivedAt = Date.now(); lastOk = receivedAt; failed = false;
+      last = await response.json();
+      if (window.MatchClock) last = window.MatchClock.gate(last);                 // before the first half, at half time and after the match no alert is shown; in a half only those written after it started
+      receivedAt = Date.now(); lastOk = receivedAt; failed = false;
     } catch (error) { failed = true; }
     render();
   }

@@ -143,8 +143,8 @@ class LiveAnalyzer:
         self.second_players = (list(team), list(other))
         if previous < 0:
             return []
-        # The first frame of this second must not be backdated into the previous second (false line jumps at occlusions and reappearances):
-        # the closed second is described by the players held as its LAST frame shows them (a player missed in one frame is still counted).
+        # The first frame of this second must not be backdated into the previous second (false line jumps at occlusions and reappearances, main branch):
+        # the closed second is described by the players held as its LAST frame shows them (a player missed in one frame is still counted, this branch).
         last = max((k for k in self.frames if int(k / self.fps) == previous), default=sample - 1)
         held_team, held_other = self.held('team', last), self.held('other', last)
         self.placed.append((len(held_team), len(held_other), len(previous_players[0]), len(previous_players[1])))

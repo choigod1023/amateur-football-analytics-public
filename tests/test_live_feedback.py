@@ -121,7 +121,7 @@ def test_an_alert_carries_a_confidence_level_and_its_evidence_and_keeps_the_old_
     def make(t):
         return squad(30.0) + (box if t >= 3 else []), [(100 + i, -x, y) for i, (_t, x, y) in enumerate(squad(30.0))]
     alert = next(a for a in play(analyzer, 12, make) if a['kind'] == 'box_attack')
-    assert alert['confidence'] == 'high' and '맞음' in alert['evidence_note']           # the judged record in words; 'evidence' holds the measured facts
+    assert alert['confidence'] == 'high' and '맞음' in alert['evidence_note']           # the judged record in words; 'evidence' holds the measured facts (main branch)
     assert alert['evidence']['basis'] == 'player_positions' and alert['evidence']['n'] >= 3
     assert {'time', 'kind', 'polarity', 'title', 'text', 'rules', 'drill', 'detail'} <= set(alert)
 

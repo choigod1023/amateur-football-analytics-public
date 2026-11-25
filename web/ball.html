@@ -1,13 +1,12 @@
 <!doctype html>
-<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>공 위치 확인 — Touchline</title><link rel="stylesheet" href="/style.css"></head>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>공 위치</title><link rel="stylesheet" href="/style.css"><link rel="stylesheet" href="/site.css"></head>
 <body><main class="app ball-app">
-<header><div class="brand"><div><strong>공 위치 확인</strong><small>BALL LABELING</small></div></div><span><a class="ev-back" href="/train">장면 라벨링</a> · <a class="ev-back" href="/events">이벤트 검토</a></span></header>
-<section class="intro"><div><h1>프레임마다 공의 위치를 눌러 주세요</h1>
-<p>공은 화면에서 4~6픽셀로 아주 작습니다. 확대한 화면에서 <b>공의 중심을 클릭</b>하면 저장되고 다음 프레임으로 넘어갑니다. 노랑·회색 동그라미는 <b>자동 후보(추천일 뿐)</b>입니다. 화면 아래에 <b>후보를 확대한 그림</b>이 나오므로 <b>공이 보이는 그림을 누르기만</b> 해도 되고, 녹색 테두리의 <b>추천 후보가 맞으면 Enter</b> 한 번이면 저장하고 다음으로 넘어갑니다. 숫자키 1~9로도 고를 수 있고, 후보에 공이 없을 때만 공을 직접 클릭하세요. <b>공이 안 보이면 N, 확실하지 않으면 U</b>를 누르세요. 선수 발의 흰 신발과 헷갈리지 않게 조심해 주세요. 이 페이지는 로그인 없이 공개됩니다.</p></div></section>
-<div class="ball-modes"><button type="button" id="mode-label" class="scene-filter is-active">라벨링 모드</button><button type="button" id="mode-verify" class="scene-filter">검증 모드 (저장한 위치 다시 확인)</button></div><p id="ball-status" role="status" aria-live="polite" class="ev-status">불러오는 중입니다.</p>
+<header class="site-head"><a class="back" href="/start">‹ 전체 화면</a><h1>공 위치</h1><p>확대한 화면에서 공의 중심을 누르면 저장하고 다음 장면으로 넘어갑니다.</p><p class="wide-only">공이 작아서 넓은 화면과 마우스로 하는 것이 편합니다.</p>
+<details class="hint"><summary>하는 방법</summary><p>노랑·회색 동그라미는 모델이 고른 <b>후보(추천일 뿐)</b>입니다. 아래 확대 그림 중 공이 보이는 것을 누르거나, 초록 테두리의 추천이 맞으면 Enter를 누릅니다. 숫자 1~9로도 고릅니다. 공이 안 보이면 N, 확실하지 않으면 U를 누릅니다. 흰 신발과 헷갈리지 않게 합니다.</p></details></header>
+<div class="ball-modes"><button type="button" id="mode-label" class="scene-filter is-active">공 찍기</button><button type="button" id="mode-verify" class="scene-filter">저장한 위치 다시 확인</button></div><p id="ball-status" role="status" aria-live="polite" class="ev-status">불러오는 중입니다.</p>
 <div class="ev-layout">
-<aside class="panel ev-side"><h2 class="ball-h">클립</h2><div id="ball-clips" class="ev-list"></div>
-<div class="review-box-tools"><button type="button" id="ball-export">공 위치 내려받기(JSON)</button></div></aside>
+<aside class="panel ev-side"><h2 class="ball-h">장면 묶음</h2><div id="ball-clips" class="ev-list"></div>
+<div class="review-box-tools"><button type="button" id="ball-export">저장한 공 위치 파일로 받기</button></div></aside>
 <section class="panel ev-main" id="ball-main" hidden>
 <h2 id="ball-title">클립</h2>
 <div class="ball-view"><canvas id="ball-canvas" width="1200" height="675" aria-label="확대한 프레임"></canvas></div>
@@ -18,11 +17,11 @@
 <label><input type="checkbox" id="ball-auto" checked> 저장 후 다음 프레임으로</label></div>
 <div class="ball-accept"><button type="button" id="ball-accept">추천 후보가 공이 맞으면 Enter (저장하고 다음)</button><span id="ball-suggest-info"></span></div><div id="ball-gallery" class="ball-gallery" aria-label="후보를 확대한 그림: 공이 보이는 것을 누르세요"></div><p id="ball-frameinfo" class="ev-reasons"></p>
 <canvas id="ball-overview" width="480" height="270" aria-label="전체 화면 개요(눌러서 확대 위치 이동)"></canvas>
-<p class="ev-help">조작: 클릭 공 위치 저장 · 1~9 후보를 공으로 · N 안 보임 · U 불확실 · ←/→ 프레임 이동 · W/A/S/D 확대 위치 이동 · 아래 개요 그림을 누르면 그 위치로 이동 · Backspace 지우기. 초록 십자는 저장한 위치, 반투명 점은 앞 프레임의 위치입니다.</p>
+<details class="ev-help"><summary>조작 방법</summary>클릭 공 위치 저장 · 1~9 후보를 공으로 · N 안 보임 · U 불확실 · ←/→ 프레임 이동 · W/A/S/D 확대 위치 이동 · 아래 개요 그림을 누르면 그 위치로 이동 · Backspace 지우기. 초록 십자는 저장한 위치, 반투명 점은 앞 프레임의 위치입니다.</details>
 </section></div>
 <section class="panel ball-verify" id="ball-verify" hidden>
 <h2>저장한 공 위치 확인</h2>
-<p>이미 저장한 위치가 <b>정말 공인지</b> 앞·현재·다음 프레임을 나란히 보고 확인합니다. 가운데 그림의 초록 십자가 저장된 위치이고, 앞뒤 그림의 흰 십자는 같은 자리입니다. 공은 선수와 따로 움직이고, 선수 신발은 선수와 함께 움직입니다. <b>맞으면 O(Enter), 공이 아니면 X, 공이 다른 곳에 보이면 가운데 그림에서 그 위치를 클릭</b>하세요. 모르겠으면 S로 건너뜁니다.</p>
+<p>가운데 그림의 초록 십자가 저장한 위치입니다. <b>맞으면 O(Enter), 공이 아니면 X, 다른 곳에 있으면 그 위치를 누릅니다.</b> 모르면 S로 건너뜁니다.</p>
 <div class="ev-filters" id="vf-filters"></div>
 <p id="vf-status" role="status" aria-live="polite" class="ev-status">불러오는 중입니다.</p>
 <div id="vf-card" hidden>
@@ -31,4 +30,4 @@
 <div class="ball-controls"><button type="button" id="vf-ok">맞음 (O / Enter)</button><button type="button" id="vf-no">공이 아님 (X)</button><button type="button" id="vf-skip">건너뛰기 (S)</button><button type="button" id="vf-prev">← 이전 위치</button></div>
 <p class="ev-help">가운데 그림을 클릭하면 그 자리로 위치를 고쳐 저장합니다(원래 위치는 기록에 남습니다). 확인 결과는 학습 때 "맞음·수정"만 정답으로 쓰고, "공이 아님"은 제외합니다.</p>
 </div></section>
-</main><script src="/ball.js"></script><script src="/ball-verify.js"></script></body></html>
+</main><script src="/ball.js"></script><script src="/ball-verify.js"></script><script src="/nav.js"></script></body></html>

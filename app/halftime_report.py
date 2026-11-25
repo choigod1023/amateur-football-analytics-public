@@ -22,6 +22,7 @@ from pathlib import Path
 from app.bench_view import SESSION
 from app.halftime_accumulator import SLOTS, Accumulator
 from app.lineup import load_lineup
+from app.opponent_summary import summary as opponent_summary
 from app.service_watch import clock_text, length_text
 
 HALF_SECONDS = 45 * 60.0
@@ -198,6 +199,11 @@ def build_report(state, half=1, end_s=None, source='coach', clock=time.time, lin
         report['lineup'] = lineup
         if lineup['formation']:
             report['second_half'].insert(2, f'계획한 모양은 {lineup["formation"]}입니다. 후반에도 선수들이 이 모양대로 서 있는지 지켜봐 주세요.')
+    try:                                                                         # the other team's block: a new field, the rest of the report never depends on it
+        named = None if len(entries) < 4 else best if share[best] >= (ENTRY_CENTRE if best == 1 else ENTRY_SIDE) else -1   # the side "상대가 들어온 곳" names (-1: none)
+        report['opponent_team'] = opponent_summary(buckets, float(header.get('pitch_length', 89.0)), float(header.get('pitch_width', 62.0)), half, entry_side=named)
+    except Exception:                                                            # noqa: BLE001 - an odd bucket must not cost the coach the whole report
+        report['opponent_team'] = opponent_summary([], half=half)
     report['build_seconds'] = round(time.monotonic() - started, 3)
     return report
 

@@ -1,4 +1,4 @@
-exec(open(__import__('os').path.join(__import__('os').path.dirname(__import__('os').path.abspath(__file__)), 'research_camera_view_classifier.py'), encoding='utf-8').read().split("# references:")[0])
+exec(open(__import__('os').path.join(__import__('os').path.dirname(__import__('os').path.abspath(__file__)), 'research_camera_view_classifier.py')).read().split("# references:")[0])
 import statistics
 refs = {'cam1': cal['cam1']['ref_token'], 'cam3': cal['cam3']['ref_token']}
 cam2 = [s for s in scenes if s['camera'] == 'cam2']; refs['cam2'] = cam2[0]['token']

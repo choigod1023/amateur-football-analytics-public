@@ -24,7 +24,7 @@ import time
 from datetime import datetime
 from pathlib import Path
 
-from app.bench_view import NOT_LIVE, SESSION, STATUS_KINDS, BenchView, is_live_session
+from app.bench_view import NOT_LIVE, SESSION, STATUS_KINDS, BenchView, belongs_to_match, current_match, is_live_session
 
 STALE = 25.0                 # seconds without a change of the alerts file (heartbeats come every 10 s while frames arrive) before the run counts as silent
 IDLE_AFTER = 3 * 3600.0      # a run that did not change for this long is an old run, not a stop to alarm about
@@ -138,6 +138,11 @@ class ServiceWatch:
         if not self.root.is_dir():
             return None
         folders = [p for p in self.root.iterdir() if p.is_dir() and SESSION.match(p.name) and is_live_session(p.name) and (p / 'alerts.jsonl').is_file()]
+        # From the moment a new match is started on /setup, a session of a match before it is not the live run any more (the rule of the score board,
+        # app/bench_view.belongs_to_match): 2026-11-25 rehearsal, the red band, the half-time prompt and the second-half band of the last match stayed after
+        # "새 경기 시작". Nothing is deleted; a new match whose analysis has not written yet is simply 'idle' (no band before the match is normal).
+        match = current_match(self.directory)
+        folders = [p for p in folders if belongs_to_match(match, p.name, (p / 'alerts.jsonl').stat().st_mtime)]
         for folder in sorted(folders, key=lambda p: (p / 'alerts.jsonl').stat().st_mtime, reverse=True):
             rows = BenchView._read(folder / 'alerts.jsonl')
             if any(r and r.get('kind') not in NOT_LIVE for r in rows):
@@ -146,15 +151,26 @@ class ServiceWatch:
 
     def judge(self, rows, modified, now):
         """rows of one alerts file, time of its last change -> (cause or None, state, pid) where state is 'ok', 'down' or 'unknown'."""
-        last_word, last_beat = None, None
+        last_word, last_beat, lost_pid = None, None, None
         for row in rows:
             if not row:
                 continue
             kind = row.get('kind')
             if kind == 'heartbeat' or row.get('type') == 'heartbeat':
-                last_word, last_beat = 'heartbeat', row
+                last_beat = row
+                # A lost input is only over when the run says 'input_back' (or another process of the run writes): the run also writes heartbeats while it waits for the video
+                # (2026-11-24 rehearsal: the red band lasted one second because a heartbeat followed the 'no_input' row).
+                if last_word == 'no_input':
+                    if lost_pid is None:
+                        lost_pid = row.get('pid')                   # no heartbeat came before the loss: the first one after it belongs to the same process
+                    elif row.get('pid') not in (None, lost_pid):
+                        last_word = 'heartbeat'
+                else:
+                    last_word = 'heartbeat'
             elif kind in STATUS_KINDS:
                 last_word = kind
+                if kind == 'no_input':
+                    lost_pid = (last_beat or {}).get('pid')
         pid = (last_beat or {}).get('pid')
         alive = self.pid_check(pid) if pid is not None else None
         age = now - modified

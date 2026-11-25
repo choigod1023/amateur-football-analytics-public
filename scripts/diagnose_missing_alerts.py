@@ -18,7 +18,7 @@ from app.difference_review import fingerprint
 from build_tactical_report import metre_rows
 from build_team_minimap import parse_schedule
 
-BASELINE_COMMIT = 'HEAD'  # set to the commit that holds the earlier version to compare against
+BASELINE_COMMIT = '6dc59a7'
 
 
 def replay(cls, data, frames):

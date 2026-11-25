@@ -36,8 +36,8 @@ TRACKS = WORK / 'tracks-ov3-20261113'
 BALL_PATHS = WORK / 'ball-paths-v4-balanced.json'
 FPS = 5.0
 HL, HW = 44.5, 31.0            # half pitch length and width of the 89 x 62 m estimate used everywhere in this project
-GOALS = []          # goal times of the match in video seconds (empty in this public copy)
-KICKOFFS = []          # kick-off times of the match in video seconds (empty in this public copy)
+GOALS = [162, 551, 648, 2028, 2137, 2397, 2629, 2843]          # video seconds, wiki/match-facts.md
+KICKOFFS = [64, 1500]
 # half name: tracks file, camera, video second of frame 0, background similarity, camera shift schedule, direction of team A (+1 attacks +x)
 HALVES = {
     'h1': dict(file='h1_v3.json', cam='cam1', offset=64.0, bg=(1.000657, 0.000035, -0.67, -0.47), sched='0:0.0,-0.2', dir_a=1),

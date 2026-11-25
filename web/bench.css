@@ -1,35 +1,168 @@
-/* Coach's bench screen: dark, large type, made for a tablet held sideways at night. Colours follow the priority (red = act now, amber = needed soon, grey = for information). */
-:root { color-scheme: dark; --bg: #0b0f14; --panel: #151b23; --text: #f2f5f8; --muted: #9aa6b2; --urgent: #ff4d4f; --notice: #f5b301; --info: #7d8b99; --ok: #3ccf7a; }
+/* Coach's bench screen: the look of the final's phone preview (tokens in web/site.css, loaded first). Large type, made for a phone or tablet at night.
+   Priority = a pill (red = act now, orange = needed soon, grey-green = for information) and the same colour on the card border. */
+:root { --ours: var(--c-pitch); --theirs: var(--c-red); --pitch-line: var(--c-chalkline); }
 * { box-sizing: border-box; }
-html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text); font-family: system-ui, "Noto Sans KR", "Malgun Gothic", sans-serif; }
-body { display: flex; flex-direction: column; min-height: 100vh; }
-.band { display: flex; align-items: center; gap: 12px; padding: 10px 20px; background: var(--panel); border-bottom: 2px solid var(--info); font-size: 1.1rem; }
+html, body { margin: 0; height: 100%; background: var(--c-bg); color: var(--c-text); font-family: var(--font); }
+body { display: flex; flex-direction: column; min-height: 100vh; word-break: keep-all; overflow-wrap: anywhere; }
+.band { display: flex; align-items: center; gap: 10px; padding: 8px 20px; background: var(--c-card); border-bottom: 2px solid var(--c-info); font-size: 1.05rem; }
 .band .spacer { flex: 1; }
-.band .dot { width: 14px; height: 14px; border-radius: 50%; background: var(--info); }
-.band.ok { border-bottom-color: var(--ok); } .band.ok .dot { background: var(--ok); }
-.band.lost { border-bottom-color: var(--urgent); background: #3a1315; } .band.lost .dot { background: var(--urgent); }
+.band .dot { width: 14px; height: 14px; border-radius: 50%; background: var(--c-info); flex: none; }
+.band.ok { border-bottom-color: var(--c-pitch); } .band.ok .dot { background: var(--c-pitch); }
+.band.lost { border-bottom-color: var(--c-red); background: var(--c-red-soft); } .band.lost .dot { background: var(--c-red); }
 .band.lost strong { color: #ffd0d1; font-size: 1.4rem; }
-.band.unknown { border-bottom-color: var(--notice); } .band.unknown .dot { background: var(--notice); }
-main { flex: 1; display: grid; grid-template-columns: minmax(0, 2fr) minmax(260px, 1fr); gap: 20px; padding: 20px; }
-.current { display: flex; align-items: center; justify-content: center; background: var(--panel); border-radius: 16px; border-left: 14px solid var(--info); padding: 24px 32px; min-height: 60vh; }
-.current[data-priority="urgent"] { border-left-color: var(--urgent); }
-.current[data-priority="notice"] { border-left-color: var(--notice); }
-.current[data-priority="info"] { border-left-color: var(--info); }
+.band.unknown { border-bottom-color: var(--c-amber); } .band.unknown .dot { background: var(--c-amber); }
+#band-detail, #band-link { color: var(--c-mute); font-size: .95rem; }
+main { flex: 1; display: grid; grid-template-columns: minmax(0, 2fr) minmax(260px, 1fr); gap: var(--s-5); padding: var(--s-5); }
+.current { display: flex; align-items: center; justify-content: center; background: var(--c-card); border-radius: var(--r-lg); border: 2px solid var(--c-line); padding: 24px 28px; min-height: 60vh; }
+.current[data-priority="urgent"] { border-color: var(--c-red); }
+.current[data-priority="notice"] { border-color: var(--c-amber); }
+.current[data-priority="info"] { border-color: var(--c-line-2); }
 .current.stale .alert { opacity: .55; }
-.alert { width: 100%; }
-.meta { display: flex; align-items: center; gap: 16px; margin-bottom: 8px; }
-.badge { padding: 4px 14px; border-radius: 999px; font-weight: 700; font-size: 1.2rem; background: var(--info); color: #0b0f14; }
-[data-priority="urgent"] .badge { background: var(--urgent); } [data-priority="notice"] .badge { background: var(--notice); }
-.age { font-size: 1.5rem; color: var(--muted); font-variant-numeric: tabular-nums; }
-h1 { margin: 0 0 12px; font-size: clamp(2.4rem, 6vw, 4.6rem); line-height: 1.1; }
-.line { margin: 0 0 18px; font-size: clamp(1.4rem, 3vw, 2.2rem); line-height: 1.35; }
-.proof { margin: 0; font-size: 1.15rem; color: var(--muted); }
-.proof.low { color: var(--notice); }
-.empty { font-size: 2rem; color: var(--muted); }
-.recent h2 { margin: 0 0 10px; font-size: 1.2rem; color: var(--muted); font-weight: 600; }
-.recent ol { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
-.recent li { background: var(--panel); border-radius: 10px; padding: 10px 14px; border-left: 8px solid var(--info); }
-.recent li[data-priority="urgent"] { border-left-color: var(--urgent); } .recent li[data-priority="notice"] { border-left-color: var(--notice); }
-.recent li b { display: block; font-size: 1.15rem; } .recent li small { color: var(--muted); font-size: 1rem; }
-@media (max-width: 800px) { main { grid-template-columns: 1fr; } }
+.alert { width: 100%; display: grid; gap: 10px; }
+.alert[hidden], .xtra[hidden] { display: none; }      /* bench.js and bench-extra.js hide these with the hidden attribute */
+.meta { display: flex; align-items: center; gap: 12px; margin: 0; }
+.badge { display: inline-flex; align-items: center; padding: 3px 14px; border-radius: var(--r-pill); font-weight: 900; font-size: 1.15rem; line-height: 1.4; background: var(--c-info); color: var(--c-on-accent); white-space: nowrap; }
+[data-priority="urgent"] .badge { background: var(--c-red); } [data-priority="notice"] .badge { background: var(--c-amber); }
+.age { font-size: 1.3rem; font-weight: 700; color: var(--c-mute); font-variant-numeric: tabular-nums; }
+h1 { margin: 0; font-size: clamp(2.4rem, 6vw, 4.6rem); line-height: 1.15; font-weight: 900; text-wrap: balance; }
+.line { margin: 0 0 18px; font-size: clamp(1.4rem, 3vw, 2.2rem); line-height: 1.4; }
+.proof { margin: 0; font-size: 1rem; color: var(--c-mute); }
+.proof.low { color: var(--c-amber); }
+.empty { font-size: 1.8rem; font-weight: 700; color: var(--c-mute); }
+.recent h2 { margin: 0 0 10px; font-size: 1.15rem; color: var(--c-text); font-weight: 900; }
+.recent ol { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.recent li { background: var(--c-card-2); border: 1px solid var(--c-line); border-radius: var(--r-md); padding: 10px 14px; border-left: 6px solid var(--c-info); }
+.recent li[data-priority="urgent"] { border-left-color: var(--c-red); } .recent li[data-priority="notice"] { border-left-color: var(--c-amber); }
+.recent li b { display: block; font-size: 1.1rem; } .recent li small { color: var(--c-mute); font-size: .95rem; font-variant-numeric: tabular-nums; }
+@media (max-width: 800px) { main { grid-template-columns: minmax(0, 1fr); } }
+/* The picture of the current alert (web/bench-extra.js), drawn like the half-time report: yellow = the players to look at, solid = how it stands now, dashed arrow = the suggested move. */
+.foot { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 12px; }
+.foot .proof { flex: 1 1 auto; }
+.more { color: var(--c-mute); }
+.more[open] { flex: 1 1 100%; }
+.more summary { cursor: pointer; font-size: .95rem; font-weight: 700; color: var(--c-lamp); min-height: 44px; display: flex; align-items: center; }
+.more summary:focus-visible { outline: 2px solid var(--c-lamp); outline-offset: 2px; border-radius: 4px; }
+.more .line { color: var(--c-text); font-size: 1rem; margin: 6px 0 0; }
+.more-title { margin: 6px 0 0; font-weight: 700; color: var(--c-text); }
+.more-title:empty { display: none; }
+#pic-slot svg { width: 100%; height: auto; display: block; border-radius: 12px; margin: 2px 0 4px; }
+#pic-slot .piccap { margin: 0 0 4px; font-size: .8rem; color: var(--c-mute); display: flex; gap: 8px; align-items: center; justify-content: space-between; white-space: nowrap; }
+#pic-slot .piclegend { margin: 0 0 2px; font-size: .8rem; color: var(--c-mute); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#pic-slot .piccap span { overflow: hidden; text-overflow: ellipsis; flex: 0 1 auto; }
+#pic-slot .piccap .picdir { flex: 1 1 auto; font-size: 1.05rem; font-weight: 900; color: var(--c-lamp); }      /* the attack direction: body size, accent colour */
+#coach-slot .coach-btns { margin-top: 4px; }
+#pic-slot .piccap button, .xtra .maptoggle { font: inherit; font-size: .85rem; font-weight: 700; min-height: 44px; padding: 2px 12px; border-radius: var(--r-sm); border: 1px solid var(--c-line-2); background: var(--c-card-2); color: var(--c-text); cursor: pointer; }
+.current.stale #pic-slot { display: none; }
+/* mini-map drawing (bench-extra.js): the rules of web/halftime.js scaled to the bench picture (534 x 372 for 89 x 62 m, 1.5 times the half-time picture) */
+.mm-grass { fill: var(--c-grass); }
+.mm-chalk { fill: none; stroke: var(--c-chalkline); stroke-width: 1.8; }
+/* the dots take the shirt colours of the match (team_colours of /api/v1/bench/minimap, set by bench-extra.js); ours = thick white ring, theirs = thin ring (light on a very dark shirt) */
+.mm-ours, .pic-ours { fill: var(--dot-ours, var(--c-pitch)); stroke: #fff; stroke-width: 3.6; }
+.mm-theirs, .pic-theirs { fill: var(--dot-theirs, #c8cec9); stroke: var(--dot-theirs-ring, var(--c-bg)); stroke-width: 1.6; }
+.mm-empty { fill: var(--c-amber); fill-opacity: .26; }
+.mm-empty-t { font: 700 22px var(--font); fill: #ffe2bf; paint-order: stroke; stroke: var(--c-bg); stroke-width: 4.5px; stroke-linejoin: round; }
+.mm-goal { font: 700 17px var(--font); fill: var(--c-text); paint-order: stroke; stroke: var(--c-bg); stroke-width: 4.5px; stroke-linejoin: round; }
+.mm-attack { font: 700 17px var(--font); fill: var(--c-lamp); paint-order: stroke; stroke: var(--c-bg); stroke-width: 4.5px; stroke-linejoin: round; }
+.pic-focus { fill: none; stroke: var(--c-lamp); stroke-width: 4; }
+.pic-threat { fill: var(--c-red); stroke: var(--c-text); stroke-width: 3; }
+.pic-now { stroke: var(--c-lamp); stroke-width: 3.4; }
+.pic-before { stroke: var(--c-text); stroke-width: 3; opacity: .85; }      /* solid = where it was (what happened); only the suggested move is dashed */
+.pic-label { font: 700 22px var(--font); fill: var(--c-text); paint-order: stroke; stroke: var(--c-bg); stroke-width: 4.5px; stroke-linejoin: round; } .pic-label.now, .pic-label.back { fill: var(--c-lamp); }
+.pic-their-line { stroke: var(--c-red); stroke-width: 3; opacity: .85; }
+.pic-zone { fill: var(--c-lamp); fill-opacity: .14; stroke: var(--c-lamp); stroke-width: 2.1; }
+.pic-arrow { fill: none; stroke: var(--c-lamp); stroke-width: 3.4; stroke-linecap: round; }
+.pic-arrow.dashed { stroke-dasharray: 9 6; }
+.pic-arrow.theirs { stroke: var(--c-red); }
+.pic-head { fill: var(--c-lamp); } .pic-head.theirs { fill: var(--c-red); }
+.recent .fold > summary { cursor: pointer; list-style: none; min-height: 44px; display: flex; align-items: center; }
+.recent .fold > summary::-webkit-details-marker { display: none; }
+.recent .fold > summary::before { content: '▸'; color: var(--c-lamp); margin-right: 8px; }
+.recent .fold[open] > summary::before { content: '▾'; }
+.recent .fold > summary h2 { margin: 0; }
+.recent .fold ol li { padding: 8px 12px; display: flex; gap: 8px; align-items: baseline; }
+.recent .fold ol li b { display: inline; font-size: 1rem; flex: 1; } .recent .fold ol li small { white-space: nowrap; }
 @media (prefers-reduced-motion: no-preference) { .current { transition: border-color .2s; } }
+/* Score board (web/score.js): the score large at the top like the half-time report, three buttons, and the waiting "looks like a goal" lines. */
+.score { background: radial-gradient(120% 160% at 50% -60%, #2b4a35 0%, var(--c-card) 62%); border-bottom: 1px solid var(--c-line); padding: 10px 16px 12px; }
+.score-line { font-size: 1.3rem; font-weight: 900; line-height: 1.1; font-variant-numeric: tabular-nums; }      /* "우리" and "상대" smaller than the numbers */
+.score-line b { font-size: 1.55em; padding: 0 .12em; font-weight: 900; letter-spacing: 1px; }
+.score-btns { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-top: 8px; }
+.score button { font: inherit; font-size: 1rem; font-weight: 700; min-height: 52px; min-width: 0; padding: 4px 2px; word-break: keep-all; border-radius: var(--r-md); border: 1px solid var(--c-line-2); background: var(--c-card-2); color: var(--c-text); cursor: pointer; touch-action: manipulation; }
+#score-btn-ours { color: var(--c-pitch); border-color: #2f7a4d; }
+#score-btn-opp { color: var(--c-red-ink); border-color: #7a3a3a; }
+.score button:disabled { opacity: .45; cursor: default; }
+.score .cand { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 8px; padding: 8px 10px; border-radius: var(--r-md); border: 1px solid var(--c-amber); background: var(--c-amber-soft); }
+.score .cand span { flex: 1 1 100%; font-size: 1.1rem; font-weight: 700; }
+.score .cand button { flex: 1 1 0; min-height: 48px; color: var(--c-text); border-color: var(--c-line-2); }
+/* First row of the board: the match clock (left) and the score (right) on one baseline, about the same size; the short note (e.g. the last goal) is a small line under them
+   only when it has words. The order in the page is unchanged (clock row, score line, buttons): .score-top only lets its two children take part in the grid. */
+.score { display: grid; grid-template-columns: auto minmax(0, 1fr); grid-template-areas: "clock line" "note note" "btns btns" "cand cand"; align-items: baseline; column-gap: 12px; }
+.score-top { display: contents; }
+.score-clock { grid-area: clock; font-size: 2rem; line-height: 1.1; font-weight: 900; color: var(--c-pitch); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.score-clock[data-state="before"], .score-clock[data-state="break"], .score-clock[data-state="over"] { color: var(--c-mute); }
+.score-line { grid-area: line; text-align: right; white-space: nowrap; }
+.score-note { grid-area: note; color: var(--c-mute); font-size: .95rem; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.score-note:empty { display: none; }
+.score-btns { grid-area: btns; }
+#score-cand { grid-area: cand; }
+/* Phone held upright: the score first, then the current alert, then the video. Long explanations are hidden; the short state word stays. */
+@media (max-width: 640px) {
+  .band { padding: 6px 12px; font-size: .95rem; gap: 8px; }
+  .band.lost strong { font-size: 1.05rem; }
+  #band-detail, #band-link { display: none; }
+  main { padding: 10px 12px; gap: 12px; }
+  .current { order: 1; min-height: 0; padding: 14px 16px; border-radius: var(--r-lg); }
+  .bench-live { order: 2; }
+  .recent { order: 3; }
+  h1 { font-size: 1.65rem; }
+  .line { font-size: 1.1rem; margin-bottom: 10px; }
+  .proof { font-size: .85rem; }
+  .empty { font-size: 1.05rem; }
+  .age { font-size: 1rem; }
+  .badge { font-size: .95rem; padding: 2px 12px; }
+  .score { padding: 4px 12px 6px; column-gap: 8px; }
+  .score-clock { font-size: 1.75rem; line-height: 1.1; }   /* clock and numbers about the same size, one baseline; the whole board stays under 110 px */
+  .score-line { font-size: .95rem; line-height: 1.1; }
+  .score-line b { font-size: 1.85em; }
+  .score-btns { margin-top: 4px; gap: 6px; }
+  .score button { min-height: 44px; }
+  .score-note { font-size: .75rem; }
+  /* the fixed bars at the bottom (half buttons and the tabs) must not cover the last lines */
+  main { padding-bottom: 150px; }
+  /* The video uses the whole width of the phone; its title line is a small label on top of the picture. */
+  main .bench-live { margin: 0 -12px; max-width: none; position: relative; }
+  main .bench-live h2 { position: absolute; z-index: 2; top: 6px; left: 8px; margin: 0; padding: 2px 10px; border-radius: var(--r-pill); background: rgba(0, 0, 0, .6); font-size: .72rem; font-weight: 700; }
+  .bench-live .live-box { border-radius: 0; }
+}
+/* Phone held sideways: the video fills the screen; clock and score are a translucent strip at the top left, a fresh alert is one line at the bottom, the bars are hidden. */
+@media (orientation: landscape) and (max-height: 500px) {
+  html, body { height: 100%; overflow: hidden; }
+  body { display: block; min-height: 0; }
+  #site-nav, .wb-halfbar { display: none !important; }
+  .band { position: fixed; top: 6px; right: 8px; z-index: 30; padding: 2px 10px; border: 0; border-radius: var(--r-pill); background: rgba(11, 19, 16, .72); font-size: .8rem; gap: 6px; }
+  .band.lost { background: rgba(120, 10, 14, .85); }
+  .band .dot { width: 10px; height: 10px; }
+  #band-detail, #band-link { display: none; }
+  .score { position: fixed; top: 6px; left: 8px; z-index: 30; display: flex; align-items: baseline; gap: 12px; padding: 3px 12px; border: 0; border-radius: var(--r-sm); background: rgba(11, 19, 16, .72); }
+  .score-btns, #score-cand, .score-note { display: none; }
+  .score-top { min-height: 0; }
+  .score-clock { font-size: .9rem; }
+  .score-line { font-size: 1.3rem; line-height: 1.2; }
+  main { display: block; padding: 0; }
+  main .bench-live { position: fixed; inset: 0; z-index: 1; margin: 0; max-width: none; background: #000; }
+  main .bench-live h2 { display: none; }
+  main .bench-live .live-box { width: 100%; height: 100%; aspect-ratio: auto; border-radius: 0; }
+  .current { position: fixed; left: 8px; right: 108px; bottom: 8px;      /* clear of the "전체 화면" button at the bottom right */ z-index: 30; min-height: 0; padding: 4px 12px; border-width: 0 0 0 6px; border-radius: var(--r-sm); background: rgba(11, 19, 16, .78); display: block; }
+  .current.stale, .current:has(#alert[hidden]) { display: none; }
+  .current .meta, .current .foot, .current #pic-slot, .current #coach-slot, .current .empty { display: none; }
+  h1 { margin: 0; font-size: 1.05rem; line-height: 1.4; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .recent { display: none; }
+  /* a stop of the analysis: the red bar becomes one thin line over the picture and the strips move below it */
+  body #wb { position: fixed; left: 0; right: 0; top: 0; }
+  body #wb .bar { padding: 4px 12px; gap: 6px 10px; font-size: .85rem; flex-wrap: nowrap; overflow: hidden; white-space: nowrap; }
+  body #wb .bar b { font-size: 1rem; }
+  body #wb .bar .grow { display: none; }
+  body #wb button { font-size: .8rem; padding: 2px 8px; border-width: 1px; min-height: 32px; }
+  body #wb .bar.ask, body #wb .bar.back { display: none !important; }        /* the questions about half time wait until the phone is held upright */
+  body:has(#wb .bar.down.show) .score, body:has(#wb .bar.down.show) .band { top: 44px; }
+}

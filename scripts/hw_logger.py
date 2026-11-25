@@ -4,7 +4,7 @@ python scripts/hw_logger.py [--folder work/hwlog] [--interval 5] [--keep-days 30
 
 * One JSON line per sample in <folder>/hw-YYYYMMDD.jsonl. Every line is flushed and fsynced, so a power loss costs at most one interval.
 * Fields: wall time, uptime, CPU load and clock, memory, disk free (C:), GPU temperature, power, load, memory, clocks, fan and the reasons the GPU slowed down (nvidia-smi), the five processes
-  that used the most CPU. CPU temperature and fan speeds of the main board are NOT read: Windows does not give them without a sensor driver.
+  that used the most CPU. CPU temperature and fan speeds of the main board are NOT read: Windows does not give them without a sensor driver (see wiki/hardware-shutdown-1118.md).
 * At start the script looks for the previous run: when the last line of the last log is older than the Windows boot time and the System log holds an unexpected-shutdown event
   (Kernel-Power 41), it writes one line to <folder>/crash-reports.jsonl with the last sample (what the computer did just before it died).
 * It only reads the computer state and writes inside <folder>. It does not change any setting and does not touch the review server or the analysis.

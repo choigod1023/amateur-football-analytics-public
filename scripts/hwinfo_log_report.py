@@ -1,6 +1,6 @@
 """Read the sensor log of HWiNFO and show what the computer measured just before the log stopped (read only).
 
-python scripts/hwinfo_log_report.py [--folder <LOG_FOLDER>] [--gap-seconds 30] [--rows 15]
+python scripts/hwinfo_log_report.py [--folder <HWiNFO log folder>] [--gap-seconds 30] [--rows 15]
 
 HWiNFO writes one CSV row every few seconds (Date, Time and about 390 sensor columns, no filter). The script reads the main rails and temperatures by their column names:
   +12V, +5V, +3.3V, 3VSB (standby power: it is what keeps the board and the wake-on-LAN alive), VBAT, Vcore, CPU temperature (Tctl/Tdie), VRM MOS temperature, GPU 12VHPWR voltage and power.
@@ -52,7 +52,7 @@ def read(folder):
 
 def main():
     p = argparse.ArgumentParser(description=__doc__)
-    p.add_argument('--folder', default='comlog'); p.add_argument('--gap-seconds', type=float, default=30.0); p.add_argument('--rows', type=int, default=15)
+    p.add_argument('--folder', default=str(Path.home() / 'Desktop' / 'comlog')); p.add_argument('--gap-seconds', type=float, default=30.0); p.add_argument('--rows', type=int, default=15)
     args = p.parse_args()
     rows, index = read(args.folder)
     if not rows:

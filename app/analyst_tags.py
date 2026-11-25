@@ -19,6 +19,7 @@ from fastapi import HTTPException, Request
 from fastapi.responses import FileResponse
 
 from app import tag_clips
+from app.bench_view import current_match
 
 MARKS = {'start_h1': '전반 시작', 'end_h1': '전반 종료', 'start_h2': '후반 시작', 'end_h2': '후반 종료'}
 EVENTS = {
@@ -69,6 +70,26 @@ def clock(tags):
     return out
 
 
+MARK_ORDER = {'start_h1': 0, 'end_h1': 1, 'start_h2': 2, 'end_h2': 3}
+CLOCK_STATE = {'start_h1': 'h1', 'end_h1': 'break', 'start_h2': 'h2', 'end_h2': 'over'}
+
+
+def match_clock(tags, now, started=None):
+    """The one match clock every screen shows (bench score board, /tag, /live, /watch): {'state': 'before' | 'h1' | 'break' | 'h2' | 'over', 'since', 'now', 'marks'}.
+    It is made from the four marks (전반 시작, 전반 종료, 후반 시작, 후반 종료) of today that were pressed after the match was started on /setup (`started`, None = no match started):
+    the newest mark says what the match is doing now; 'since' is the server time of the kickoff of the running half (None otherwise), 'now' the server time of this answer
+    (a screen counts from it, so a wrong phone clock does not matter), 'marks' the kinds already marked in this match (a button that must mark only once looks there).
+    No length of a half is used: a half simply keeps counting until its end mark."""
+    today = day_of(now)
+    marks = sorted((t['epoch'], MARK_ORDER[t['kind']], t['kind']) for t in tags.values()
+                   if t['kind'] in MARKS and day_of(t['epoch']) == today and (started is None or t['epoch'] >= started))
+    if not marks:
+        return {'state': 'before', 'since': None, 'now': now, 'marks': []}
+    epoch, _, kind = marks[-1]
+    state = CLOCK_STATE[kind]
+    return {'state': state, 'since': epoch if state in ('h1', 'h2') else None, 'now': now, 'marks': sorted({m[2] for m in marks}, key=MARK_ORDER.get)}
+
+
 def install(app, directory, web_root, recordings=None, ffmpeg=None):
     root = Path(directory) / 'analyst-tags'
     store = root / 'tags.jsonl'
@@ -91,6 +112,7 @@ def install(app, directory, web_root, recordings=None, ffmpeg=None):
     page('/tag', 'tag.html')
     page('/tag.js', 'tag.js', 'application/javascript')
     page('/tag.css', 'tag.css', 'text/css')
+    page('/match-clock.js', 'match-clock.js', 'application/javascript')
 
     def read():
         if not store.is_file():
@@ -140,6 +162,11 @@ def install(app, directory, web_root, recordings=None, ffmpeg=None):
                 work.task_done()
 
     threading.Thread(target=worker, name='analyst-tag-clips', daemon=True).start()
+
+    @app.get('/api/v1/clock')
+    def clock_state():
+        match = current_match(directory)
+        return match_clock(read(), time.time(), match[1] if match else None)
 
     @app.get('/api/v1/analyst-tags')
     def tags_list(day: str = ''):

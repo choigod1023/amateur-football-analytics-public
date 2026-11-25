@@ -6,8 +6,10 @@
     const level = state.state === 'down' ? 'down' : state.state === 'ok' ? 'ok' : 'unknown';
     el('state').dataset.level = level;
     el('headline').textContent = state.headline;
-    el('detail').textContent = state.state === 'down' ? `${state.since_text}부터 ${state.duration_text} 동안 멈춤. ${state.detail}` : state.detail;
-    el('meta').textContent = [state.session ? `실행 이름 ${state.session}` : '', state.last_change_age_s == null ? '' : `알림 파일이 ${Math.round(state.last_change_age_s)}초 전에 바뀌었습니다`].filter(Boolean).join(' · ');
+    // The red band above already says since when; this box says what it means and what to do.
+    el('detail').textContent = state.detail;
+    const age = state.last_change_age_s;
+    el('meta').textContent = [state.session ? `경기 기록 ${state.session}` : '', age == null ? '' : `마지막 기록 ${age < 90 ? Math.round(age) + '초' : Math.round(age / 60) + '분'} 전`].filter(Boolean).join(' · ');
     const body = el('log');
     body.replaceChildren();
     for (const o of state.outages || []) {

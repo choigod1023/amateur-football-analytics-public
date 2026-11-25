@@ -5,8 +5,8 @@
   Stop: close the window or press Ctrl+C. Pieces are named <date>_<time>.mp4 (fragmented MP4, so a cut file is still playable).
 #>
 param(
-    [string]$OutDir = (Join-Path $PSScriptRoot '..\..\football-coach-server\recordings\match-1118'),
-    [string]$Ffmpeg = (Join-Path $PSScriptRoot '..\..\..\work\ffmpeg-local\ffmpeg-9.0.2-essentials_build\bin\ffmpeg.exe'),
+    [string]$OutDir = (Join-Path (Get-Location) 'recordings\match'),
+    [string]$Ffmpeg = $(if ($env:FFMPEG) { $env:FFMPEG } else { 'ffmpeg' }),
     [string]$Url = 'rtsp://127.0.0.1:18554/match'
 )
 New-Item -ItemType Directory -Force $OutDir | Out-Null

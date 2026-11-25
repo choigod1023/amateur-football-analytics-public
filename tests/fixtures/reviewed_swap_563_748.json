@@ -5,14 +5,14 @@
     "563",
     "748"
   ],
-  "user_answer": "synthetic example answer (ids swapped)",
+  "user_answer": "맞음 — 두 선수의 ID가 서로 바뀜",
   "scope": {
     "before_start_s": 33.8,
     "before_end_s": 34.2,
     "start_s": 35.4,
     "end_s": 35.6,
-    "video_sha256": "3c98b6dff998de552444f48876c351aa50b88c4cb07992f175a9341d170790c3",
-    "trace_sha256": "ac3699ab37e8ed985f51f4d002d0d0f594584f8286a6bf21b11281d47e316df9"
+    "video_sha256": "7e61e4610472d49172984cbd8ba971c72efc294ee30eb15dc6f551a8788acf59",
+    "trace_sha256": "bef573d55e5c8090f3362524de1cbe88c32652ec86130565c0599cf93585cf9a"
   },
   "same_team": null,
   "training_applied": false

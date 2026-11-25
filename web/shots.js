@@ -107,7 +107,7 @@
       li.className = (current && current.id === c.id ? 'on ' : '') + (t ? '' : 'todo');
       li.textContent = label(c);
       const st = document.createElement('span'); st.className = 'st';
-      st.textContent = t ? (t.result === 'none' ? '슛 아님' : RESULT.find(x => x[0] === t.result)[1]) : '미표시';
+      st.textContent = t ? (t.result === 'none' ? '슛 아님' : RESULT.find(x => x[0] === t.result)[1]) : '표시 전';
       li.prepend(st);
       li.addEventListener('click', () => select(c));
       list.append(li);

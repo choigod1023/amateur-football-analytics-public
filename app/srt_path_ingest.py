@@ -16,7 +16,7 @@ from app.demo_job import ChildJob
 ROOT = Path(__file__).resolve().parent.parent
 
 
-def config_for(bind_ip: str, source_ip: str, srt_port: int = 18890, rtsp_port: int = 18554, *, record: bool = False, allow_any_publisher: bool = False) -> str:
+def config_for(bind_ip: str, source_ip: str, srt_port: int = 18890, rtsp_port: int = 18554, *, record: bool = False, allow_any_publisher: bool = False, hls_port: int = 18888) -> str:
     bind = ipaddress.ip_address(bind_ip)
     source = ipaddress.ip_address(source_ip)
     if bind.version != 4 or bind.is_unspecified or bind.is_multicast or bind.is_link_local:
@@ -25,8 +25,10 @@ def config_for(bind_ip: str, source_ip: str, srt_port: int = 18890, rtsp_port: i
         raise ValueError('bind must be loopback or an RFC1918 address')
     if source.version != 4 or source.is_unspecified or source.is_multicast or source.is_link_local:
         raise ValueError('source must be one valid IPv4 address')
-    if not all(isinstance(v, int) and 1024 <= v <= 65535 for v in (srt_port, rtsp_port)):
+    if not all(isinstance(v, int) and not isinstance(v, bool) and 1024 <= v <= 65535 for v in (srt_port, rtsp_port, hls_port)):
         raise ValueError('invalid port')
+    if hls_port in (srt_port, rtsp_port):
+        raise ValueError('HLS port must differ from the SRT and RTSP ports')
     if not isinstance(allow_any_publisher, bool):
         raise ValueError('allow_any_publisher must be boolean')
     publisher_ips = '[]' if allow_any_publisher else f'[{source}/32]'
@@ -37,7 +39,12 @@ rtsp: true
 rtspAddress: 127.0.0.1:{rtsp_port}
 rtspTransports: [tcp]
 rtmp: false
-hls: false
+hls: true
+hlsAddress: 127.0.0.1:{hls_port}
+hlsVariant: fmp4
+hlsSegmentDuration: 1s
+hlsSegmentCount: 5
+hlsAllowOrigins: []
 webrtc: false
 moq: false
 srt: true
@@ -93,7 +100,8 @@ def main():
                          os.environ.get('FOOTBALL_SRT_PUBLISHER_IP', '127.0.0.1'),
                          int(os.environ.get('FOOTBALL_SRT_PORT', '18890')),
                          int(os.environ.get('FOOTBALL_RTSP_PORT', '18554')),
-                         record=True, allow_any_publisher=allow_any == '1')
+                         record=True, allow_any_publisher=allow_any == '1',
+                         hls_port=int(os.environ.get('FOOTBALL_HLS_PORT', '18888')))
         env = secure_environment(os.environ)
         exe = mediamtx_binary(os.environ)
         recording_directory(os.environ).mkdir(parents=True, exist_ok=True)

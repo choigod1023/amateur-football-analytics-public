@@ -61,3 +61,68 @@ def test_an_exception_while_reading_is_a_failed_read_not_a_crash():
 def test_a_status_record_is_not_a_coaching_alert():
     record = status_record('no_input', 12.34)
     assert record['polarity'] == 'status' and record['time'] == 12.3 and record['detail'] is None and record['title'] == '입력 없음'
+
+
+def _waits(attempts, max_wait=None):
+    waits = []
+    extra = {} if max_wait is None else {'max_wait': max_wait}
+    reader = ReconnectingReader(lambda: FakeCapture([]), max_retries=attempts, sleep=waits.append, clock=lambda: 0.0, log=lambda t: None, **extra)
+    reader.read()
+    return waits
+
+
+def test_default_wait_sequence_is_unchanged():
+    assert _waits(8) == [1.0, 2.0, 4.0, 8.0, 16.0, 30.0, 30.0, 30.0]
+
+
+def test_a_cap_of_two_seconds_gives_1_2_2_2():
+    assert _waits(4, max_wait=2.0)[:4] == [1.0, 2.0, 2.0, 2.0]
+
+
+def test_a_cap_that_is_zero_or_negative_is_an_error():
+    import pytest
+    for bad in (0, -1.0):
+        with pytest.raises(ValueError):
+            ReconnectingReader(lambda: FakeCapture([]), max_wait=bad)
+
+
+def test_a_cap_of_two_seconds_keeps_trying_until_the_default_total_wait_is_spent():
+    waits = _waits(8, max_wait=2.0)
+    assert waits[:4] == [1.0, 2.0, 2.0, 2.0] and sum(waits) >= 121.0 and sum(waits[:-1]) < 121.0 and len(waits) == 61
+
+
+def test_default_cap_gives_up_after_eight_tries_as_before():
+    waits = _waits(8)
+    assert len(waits) == 8 and sum(waits) == 121.0
+
+
+def test_a_user_given_max_retries_sets_the_budget_for_a_cap():
+    assert _waits(3) == [1.0, 2.0, 4.0]                                  # budget 7 s
+    assert _waits(3, max_wait=2.0) == [1.0, 2.0, 2.0, 2.0]               # 7 s as well
+
+
+def test_give_up_seconds_keeps_trying_until_that_much_time_has_passed_and_no_longer():
+    waits = []
+    now = [0.0]
+
+    def sleep(seconds):
+        waits.append(seconds)
+        now[0] += seconds
+    reader = ReconnectingReader(lambda: FakeCapture([]), max_wait=2.0, give_up_seconds=1200.0, sleep=sleep, clock=lambda: now[0], log=lambda t: None)
+    assert reader.read() == (False, None) and reader.gave_up
+    assert 1198 <= sum(waits) <= 1202 and len(waits) > 500 and max(waits) == 2.0           # about 20 minutes of tries every 2 seconds, not the old 61 tries
+
+
+def test_give_up_seconds_stops_the_wait_as_soon_as_the_stream_is_back():
+    events = []
+    captures = [FakeCapture(['a']), FakeCapture([])] + [FakeCapture([]) for _ in range(200)] + [FakeCapture(['b'])]
+    reader = ReconnectingReader(lambda: captures.pop(0), max_wait=2.0, give_up_seconds=1200.0, sleep=lambda s: None, clock=lambda: 0.0, log=lambda t: None, notify=lambda kind, text: events.append(kind))
+    assert reader.read() == (True, 'a') and reader.read() == (True, 'b')
+    assert events == ['no_input', 'input_back'] and not reader.gave_up
+
+
+def test_give_up_seconds_must_be_above_zero():
+    import pytest
+    for bad in (0, -5):
+        with pytest.raises(ValueError):
+            ReconnectingReader(lambda: FakeCapture([]), give_up_seconds=bad)

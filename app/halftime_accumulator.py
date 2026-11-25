@@ -21,6 +21,7 @@ import os
 from pathlib import Path
 
 from app.goalkeeper import without_goalkeeper
+from app.opponent_summary import add_second as add_opponent_second, new_opp
 from app.report_scenes import second_metrics
 from app.tactical_concepts import runs_in_behind
 from app.team_tactics import MIN_PLAYERS, PITCH_WIDTH, open_side, shape
@@ -42,7 +43,7 @@ def new_half(direction, start=None):
 
 def new_bucket():
     return {'n': 0, 'shape_n': 0, 'depth': 0.0, 'width': 0.0, 'g0': 0.0, 'g1': 0.0, 'back': 0.0, 'ahead': 0, 'open_n': 0, 'open': [0, 0, 0],
-            'st': [[0.0, 0.0, 0] for _ in range(SLOTS)], 'so': [[0.0, 0.0, 0] for _ in range(SLOTS)]}
+            'st': [[0.0, 0.0, 0] for _ in range(SLOTS)], 'so': [[0.0, 0.0, 0] for _ in range(SLOTS)], 'opp': new_opp()}
 
 
 def merge_doubles(points):
@@ -128,6 +129,11 @@ class Accumulator:
             state['first'] = float(row.get('first_second', 0.0))
             state['halves']['1'] = new_half(int(row['direction']))
             return 0
+        if row.get('type') == 'header' and row.get('direction') in (1, -1) and state['half'] == 1 and self.current is not None:
+            # a later run of the analysis in the first half (stopped and started again with the other direction): its header holds the direction from now on
+            # (as app/halftime_rich.py). After the switch the second half keeps the switch's direction.
+            self.current['direction'] = int(row['direction'])
+            return 0
         if row.get('type') == 'half' and isinstance(row.get('time'), (int, float)):
             if state['half'] == 1 and state['header']:
                 self.switch_half(float(row['time']), row.get('direction'))
@@ -177,6 +183,8 @@ class Accumulator:
         minute = str(int((t - half['start_t']) // 60))
         bucket = half['minutes'].setdefault(minute, new_bucket())
         bucket['n'] += 1
+        if 'opp' in bucket:                                           # the other team's block (app/opponent_summary.py); a bucket from an older file has none
+            add_opponent_second(bucket['opp'], ours, [(x * direction, y * direction) for _, x, y in other], pitch_length, float(header.get('pitch_width', PITCH_WIDTH)))
         for who, points, key in (('team', ours, 'st'), ('other', theirs, 'so')):
             self._slots(half, bucket, who, key, points)
         for who, points in (('team', team), ('other', other)):

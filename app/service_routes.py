@@ -14,9 +14,11 @@ from pydantic import BaseModel, ConfigDict, Field
 from app.bench_view import SESSION
 from app.coach_feedback import CoachFeedback, latest_positions
 from app.halftime_report import HalftimeService
+from app.halftime_rich import RichReports, current_session
 from app.service_watch import ServiceWatch
+from app.team_colour_view import team_colours
 
-PAGES = {'/bench-extra.js': 'bench-extra.js', '/watch': 'watch.html', '/watch.js': 'watch.js', '/watch.css': 'watch.css', '/watch-banner.js': 'watch-banner.js', '/halftime': 'halftime.html', '/halftime.js': 'halftime.js'}
+PAGES = {'/bench-extra.js': 'bench-extra.js', '/watch': 'watch.html', '/watch.js': 'watch.js', '/watch.css': 'watch.css', '/watch-banner.js': 'watch-banner.js', '/halftime': 'halftime.html', '/halftime.js': 'halftime.js', '/halftime.css': 'halftime.css'}
 
 
 class SessionRef(BaseModel):
@@ -91,6 +93,27 @@ def install(app, directory, web_root, start_thread=True):
             raise HTTPException(404, 'No report yet')
         return report
 
+    rich = RichReports(directory)
+
+    @app.get('/api/v1/halftime/rich')
+    def halftime_rich(session: str = None, half: int = 1):
+        """The picture-first report (app/halftime_rich.py), made again from the records on request. While the half runs it is the report "so far"; after "전반 끝" it stops at the
+        end the button saved. Never writes anything."""
+        if session is not None and not SESSION.match(session):
+            raise HTTPException(400, 'Bad session')
+        if half not in (1, 2):
+            raise HTTPException(400, 'Bad half')
+        session = session or current_session(directory)        # no session in the address: the match of /setup (the rule of the score board)
+        if not session:
+            return {'session': None, 'state': 'empty', 'status_text': '진행 중인 라이브 실행이 없습니다.', 'blocks': {}}
+        state = halftime._state(session) or {}
+        end_s = state.get('end_s') if half == 1 and state.get('status') == 'ready' else None
+        try:
+            report = rich.get(session, half, end_s, final=end_s is not None)
+        except (OSError, ValueError) as exc:
+            raise HTTPException(409, str(exc)) from exc
+        return {**report, 'team_colours': team_colours(directory)} if isinstance(report, dict) else report     # the shirt colours of the match for the dots (2026-11-25)
+
     @app.post('/api/v1/halftime/start')
     def halftime_start(data: HalftimeStart):
         session = data.session or (halftime.status().get('session'))
@@ -133,11 +156,12 @@ def install(app, directory, web_root, start_thread=True):
         if not session or not SESSION.match(session):
             return {'session': None}
         path = halftime.positions_file(session)
+        colours = team_colours(directory)       # the shirt colours of the match for the dots of the map and of the alert picture (2026-11-25)
         if path is None:
-            return {'session': session, 'positions': None}
+            return {'session': session, 'positions': None, 'team_colours': colours}
         state = halftime.accumulator(session).state
         current = state['halves'].get(str(state['half'])) if state.get('header') else None
-        return {'session': session, 'positions': latest_positions(path, current['direction'] if current else None)}
+        return {'session': session, 'positions': latest_positions(path, current['direction'] if current else None), 'team_colours': colours}
 
     @app.get('/api/v1/bench/feedback')
     def bench_feedback_state(session: str, numbers: str = ''):

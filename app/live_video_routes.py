@@ -3,20 +3,29 @@
 /live            page that shows the picture alone (for the people who only watch)
 /live-video.mjpg motion JPEG made by ONE ffmpeg from the stream MediaMTX holds on the same computer (rtsp://127.0.0.1:18554/match)
                  that is shared by every viewer (the first viewer starts it, it stops 15 s after the last viewer left)
+/live-hls/<file> HLS playlist and pieces of the same stream, passed on unchanged from MediaMTX (127.0.0.1 only, see HLS_URL); web/live-hls.js
+                 uses it when the phone can play HLS (itself, or through hls.js from /vendor/hls.min.js) and falls back to /live-video.mjpg when it cannot
 The bench screen (/bench) shows the same picture in a panel. When there is no stream the picture request ends and the page asks again every 3 seconds.
 """
 import glob
 import os
+import re
 import shutil
 import subprocess
 import threading
 import time
 from pathlib import Path
 
-from fastapi import HTTPException
-from fastapi.responses import FileResponse, StreamingResponse
+import httpx
+from fastapi import HTTPException, Request
+from fastapi.responses import FileResponse, Response, StreamingResponse
 
 RTSP_URL = os.environ.get('LIVE_VIDEO_URL', 'rtsp://127.0.0.1:18554/match')
+HLS_URL = os.environ.get('LIVE_HLS_URL', 'http://127.0.0.1:18888/match')   # MediaMTX HLS output, bound to 127.0.0.1 (app/srt_path_ingest.py)
+HLS_TIMEOUT = 2.0                               # seconds; no answer from MediaMTX in that time -> 502 and the page uses the JPEG picture
+HLS_NAME = re.compile(r'[A-Za-z0-9_.-]+')
+HLS_QUERY = re.compile(r'[A-Za-z0-9_.=&%-]{0,200}')      # MediaMTX asks for ?session=<id> and ?cookieCheck=1
+HLS_TYPES = {'.m3u8': 'application/vnd.apple.mpegurl', '.mp4': 'video/mp4', '.m4s': 'video/iso.segment', '.ts': 'video/mp2t'}
 MAX_VIEWERS = 20
 WIDTH = 960
 FPS = 8
@@ -143,6 +152,35 @@ def install(app, web_root):
 
     asset('/live-video.css', 'live-video.css', 'text/css')
     asset('/live-video-view.js', 'live-video-view.js', 'application/javascript')
+    asset('/live-hls.js', 'live-hls.js', 'application/javascript')
+    asset('/vendor/hls.min.js', 'vendor/hls.min.js', 'application/javascript')     # hls.js 1.6.5 (web/vendor/README.md); live-hls.js loads it only when the browser cannot play HLS itself
+
+    @app.get('/live-hls/{name}')
+    def live_hls(name: str, request: Request):
+        suffix = os.path.splitext(name)[1].lower()
+        if not HLS_NAME.fullmatch(name) or '..' in name or name.startswith('.') or suffix not in HLS_TYPES:
+            raise HTTPException(404)
+        query = request.url.query
+        if not HLS_QUERY.fullmatch(query):
+            raise HTTPException(404)
+        headers = {'Range': request.headers['range']} if 'range' in request.headers else {}
+        url = f'{HLS_URL}/{name}' + ('?' + query if query else '')
+        try:
+            upstream = httpx.get(url, headers=headers, timeout=HLS_TIMEOUT, trust_env=False, follow_redirects=False)
+            if upstream.status_code == 302 and upstream.headers.get('location', '').startswith(f'/match/{name}?'):
+                # MediaMTX's cookie check on the first playlist: it only wants '?cookieCheck=1' back; our own request keeps no cookie
+                again = upstream.headers['location'].split('?', 1)[1]
+                if HLS_QUERY.fullmatch(again):
+                    upstream = httpx.get(f'{HLS_URL}/{name}?{again}', headers=headers, timeout=HLS_TIMEOUT, trust_env=False, follow_redirects=False)
+        except httpx.HTTPError:
+            raise HTTPException(502, 'stream server did not answer')
+        if upstream.status_code == 404:
+            raise HTTPException(404)
+        if upstream.status_code not in (200, 206):
+            raise HTTPException(502, 'stream server answered ' + str(upstream.status_code))
+        answer = {key: upstream.headers[key] for key in ('content-range', 'accept-ranges') if key in upstream.headers}
+        answer['Cache-Control'] = 'no-store'
+        return Response(upstream.content, status_code=upstream.status_code, media_type=HLS_TYPES[suffix], headers=answer)
 
     @app.get('/live-video.mjpg')
     def live_video():

@@ -1,7 +1,7 @@
 """A coaching review of a whole half: the moments worth talking about, each followed through to the end of the attack.
 
 Usage: python scripts/build_review_video.py <tracks.json> <calibrations.json> <camera> <video> <output folder> --team B --direction 1
-       [--half-name 후반] [--goals 300,450] [--max-events 10] [--pitch-length 89 --pitch-width 62] [--reference-bg A B TX TY]
+       [--half-name 후반] [--goals 162,551] [--max-events 10] [--pitch-length 89 --pitch-width 62] [--reference-bg A B TX TY]
        [--shift-schedule "0:0,0;1950:0.3,0.3"] [--ffmpeg ffmpeg]
 
 The whole half is searched (app/event_miner.py) for runs in behind, runs the team allowed, an advanced player left alone and the back line dropping deep;

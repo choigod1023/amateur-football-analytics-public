@@ -18,6 +18,8 @@ import threading
 import time
 from pathlib import Path
 
+from app.alert_picture import PictureCache, alert_segments, short_line
+
 SESSION = re.compile(r'^[A-Za-z0-9_-]{1,40}$')
 PRIORITY = {'conceded_run': 'urgent', 'box_attack': 'urgent', 'isolated': 'notice', 'run': 'notice', 'line_drop': 'info', 'gap_wide': 'info'}
 PRIORITY_TEXT = {'urgent': '급함', 'notice': '주의', 'info': '참고'}
@@ -31,6 +33,57 @@ RECENT = 5
 def is_live_session(name):
     """False for hand-labelling sessions (label-...) and archives (_...): they must never be shown as the live run."""
     return not (name.startswith('label-') or name.startswith('_'))
+
+
+def current_match(directory):
+    """The match the person started on /setup (<store>/service/setup/match.json): (name, moment it was started) or None.
+    From that moment the sessions of the matches before are not the live run any more, even though their files are the newest ones until the new analysis writes its first row."""
+    try:
+        value = json.loads((Path(directory) / 'service' / 'setup' / 'match.json').read_text(encoding='utf-8'))
+        name = value['name']
+        started = time.mktime(time.strptime(value['created'], '%Y-%m-%dT%H:%M:%S'))
+    except (OSError, ValueError, KeyError, TypeError, OverflowError):
+        return None
+    return (name, started) if isinstance(name, str) and SESSION.match(name) and is_live_session(name) else None
+
+
+def belongs_to_match(match, name, changed):
+    """Whether a session may be the live one: no match started, the session is the match itself, or it was written to after the match was started (a run started by hand under another name)."""
+    return match is None or name == match[0] or changed >= match[1]
+
+
+def live_session(directory):
+    """The one rule for "the match now" when an address names none (score board, half-time report): the most recently changed live session that belongs to the started
+    match, whose alerts hold a row that is not a person-check row; else the started match itself (a new match whose analysis has written nothing yet); else None."""
+    root = Path(directory) / 'alerts'
+    if not root.is_dir():
+        return None
+    match = current_match(directory)
+    pairs = []
+    for p in root.iterdir():
+        try:
+            if p.is_dir() and SESSION.match(p.name) and is_live_session(p.name) and (p / 'alerts.jsonl').is_file():
+                changed = (p / 'alerts.jsonl').stat().st_mtime
+                if belongs_to_match(match, p.name, changed):          # the matches before a newly started one are not the live run
+                    pairs.append((changed, p))
+        except OSError:
+            continue
+    pairs.sort(key=lambda x: x[0], reverse=True)
+    for _, folder in pairs:
+        try:
+            with open(folder / 'alerts.jsonl', encoding='utf-8') as handle:
+                for line in handle:
+                    try:
+                        row = json.loads(line)
+                    except ValueError:
+                        continue
+                    if isinstance(row, dict) and row.get('kind') not in NOT_LIVE:
+                        return folder.name
+        except OSError:
+            continue
+    if match and (root / match[0]).is_dir():
+        return match[0]
+    return None
 
 
 def priority_of(row):
@@ -78,6 +131,7 @@ class BenchView:
         self.clock = clock
         self.lock = threading.Lock()
         self.first_seen = {}            # (session, row number) -> (moment, whether the moment is only the last change of the file)
+        self.pictures = PictureCache(directory)   # picture of the current alert, computed again from the position record of the run (app/alert_picture.py)
 
     @staticmethod
     def _read(path):
@@ -141,15 +195,21 @@ class BenchView:
         with self.lock:
             folders = self._sessions()
             chosen = None
+            match = None if session else current_match(self.root.parent)
             for folder in folders:
                 if session and folder.name != session:
                     continue
                 if not session and not is_live_session(folder.name):
                     continue
+                if not belongs_to_match(match, folder.name, (folder / 'alerts.jsonl').stat().st_mtime):
+                    continue
                 rows = self._read(folder / 'alerts.jsonl')
                 if self._is_live(rows):
                     chosen = (folder, rows)
                     break
+            if chosen is None and match and (self.root / match[0]).is_dir():      # a new match, the analysis has written nothing yet: the screen is empty, but it is this match's
+                return {'session': match[0], 'now': now, 'state': {'state': 'unknown', 'reason': '새 경기입니다. 분석이 아직 기록을 쓰지 않았습니다', 'since_s': None},
+                        'current': None, 'recent': [], 'accuracy': self.accuracy(), 'priority_text': PRIORITY_TEXT}
             if chosen is None:
                 return {'session': None, 'now': now, 'state': {'state': 'unknown', 'reason': '실시간 알림 파일이 없습니다', 'since_s': None},
                         'current': None, 'recent': [], 'accuracy': self.accuracy(), 'priority_text': PRIORITY_TEXT}
@@ -169,10 +229,17 @@ class BenchView:
                     continue
                 kind = row.get('kind', '')
                 level = priority_of(row)
-                alerts.append({'number': i, 'kind': kind, 'title': row.get('title') or kind, 'text': row.get('text') or '', 'priority': level,
+                alerts.append({'number': i, 'kind': kind, 'title': row.get('title') or kind, 'text': row.get('text') or '', 'priority': level, 'line': short_line(row),
                                'priority_text': PRIORITY_TEXT[level], 'status': row.get('polarity') == 'status' or kind in STATUS_KINDS,
                                'age_s': round(max(0.0, now - seen[i]), 1), 'age_estimated': self.first_seen[(folder.name, i)][1],
                                'accuracy': None if (kind in STATUS_KINDS or row.get('polarity') == 'status') else accuracy.get(kind, {'total': 0, 'ok': 0, 'text': accuracy_text(0, 0), 'low_sample': True})})
             alerts.reverse()
+            if alerts:
+                current = alerts[0]
+                try:
+                    number = current['number']
+                    current['picture'] = None if current['status'] else self.pictures.get(folder.name, number, rows[number], alert_segments(rows)[number])
+                except Exception:          # the picture is an addition: the screen works as before without it
+                    current['picture'] = None
             return {'session': folder.name, 'now': now, 'file_age_s': round(now - modified, 1), 'state': input_state(rows, seen, now),
                     'current': alerts[0] if alerts else None, 'recent': alerts[1:1 + RECENT], 'accuracy': accuracy, 'priority_text': PRIORITY_TEXT}

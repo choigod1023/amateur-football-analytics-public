@@ -31,8 +31,8 @@ def status(manager, job_id):
 
 def test_options_are_checked_and_goals_must_lie_inside_the_range(tmp_path):
     manager = make(tmp_path)
-    good = manager.validate({**OPTIONS, 'goals': '300, 450 500'})
-    assert good['goals'] == [300.0, 450.0, 500.0] and good['title'] == '시험 경기'
+    good = manager.validate({**OPTIONS, 'goals': '162, 551 598'})
+    assert good['goals'] == [162.0, 551.0, 598.0] and good['title'] == '시험 경기'
     for bad in ({'goals': '700'}, {'goals': ','.join(['1'] * 13)}, {'team': 'C'}, {'direction': 2}, {'end': 0}, {'camera': '../x'}):
         with pytest.raises(ValueError):
             manager.validate({**OPTIONS, **bad})
@@ -86,7 +86,7 @@ def test_health_cameras_listing_and_log_paths(tmp_path):
     assert health['counts']['queued'] == 1 and health['upload_enabled'] and health['disk_free_gb'] > 0
     listed = manager.listing()['jobs'][0]
     assert listed['title'] == '시험 경기' and listed['goals'] == [10.0, 20.0] and listed['status']['step_name'] == '순서 대기' and listed['can_retry'] is False
-    (manager.root / job / 'detect.log').write_text('error in D:\\secret\\folder\\video.mp4 failed', encoding='utf-8')
+    (manager.root / job / 'detect.log').write_text('error in C:\\Data\\secret\\folder\\video.mp4 failed', encoding='utf-8')
     assert 'secret' not in manager.log_tail(job, 'detect') and 'video.mp4' in manager.log_tail(job, 'detect')
     with pytest.raises(ValueError):
         manager.log_tail(job, '../../etc')

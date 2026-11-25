@@ -1,24 +1,46 @@
-:root { color-scheme: dark; --bg: #0b0f14; --panel: #151b23; --text: #f2f5f8; --muted: #9aa6b2; --urgent: #ff4d4f; --ok: #3ccf7a; --notice: #f5b301; }
+/* Analysis watch page (/watch). Colours, shapes and type are the tokens of web/site.css (loaded first). */
 * { box-sizing: border-box; }
-html, body { margin: 0; background: var(--bg); color: var(--text); font-family: system-ui, "Noto Sans KR", "Malgun Gothic", sans-serif; }
+html, body { margin: 0; background: var(--bg); color: var(--text); font-family: var(--font); }
 main { max-width: 980px; margin: 0 auto; padding: 20px 16px 80px; display: grid; gap: 20px; }
-section { background: var(--panel); border-radius: 14px; padding: 18px 22px; }
-.state { border-left: 14px solid var(--notice); }
-.state[data-level="ok"] { border-left-color: var(--ok); }
-.state[data-level="down"] { border-left-color: var(--urgent); }
-h1 { margin: 0 0 8px; font-size: clamp(2rem, 6vw, 3.6rem); }
-h2 { margin: 0 0 10px; font-size: 1.3rem; }
+section { background: var(--c-card); border: 1px solid var(--c-line); border-radius: var(--r-lg); padding: 18px 22px; }
+.state { border: 2px solid var(--notice); }
+.state[data-level="ok"] { border-color: var(--ok); }
+.state[data-level="down"] { border-color: var(--urgent); background: var(--c-red-soft); }
+h1 { margin: 0 0 8px; font-size: clamp(2rem, 6vw, 3.6rem); font-weight: 900; line-height: 1.15; }
+h2 { margin: 0 0 10px; font-size: 1.3rem; font-weight: 900; }
 p, li { font-size: 1.2rem; line-height: 1.45; }
 p { margin: 6px 0; }
 .small { font-size: .95rem; color: var(--muted); }
 table { width: 100%; border-collapse: collapse; font-size: 1.1rem; }
-th, td { text-align: left; padding: 8px 6px; border-bottom: 1px solid #263140; }
+th, td { text-align: left; padding: 8px 6px; border-bottom: 1px solid var(--c-line); font-variant-numeric: tabular-nums; }
 th { color: var(--muted); font-weight: 600; }
-td.open { color: #ffb3b4; font-weight: 700; }
-a { color: #8fc2ff; }
+td.open { color: var(--c-red-ink); font-weight: 700; }
+a { color: var(--c-link); }
 .pictures { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 14px; margin-top: 10px; }
 .pictures figure { margin: 0; } .pictures svg { width: 100%; height: auto; display: block; } .pictures figcaption { text-align: center; font-size: 1.1rem; margin-top: 4px; color: var(--muted); }
 #summary p { font-size: 1.35rem; }
 .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 10px; }
-.card { background: #1b2430; border-radius: 10px; padding: 10px 12px; display: grid; gap: 2px; }
-.card b { color: #8fc2ff; } .card span { font-size: 1.2rem; } .card small { color: var(--muted); font-size: .95rem; }
+.card { background: var(--c-card-2); border: 1px solid var(--c-line); border-radius: var(--r-md); padding: 10px 12px; display: grid; gap: 2px; }
+.card b { color: var(--c-lamp); } .card span { font-size: 1.2rem; } .card small { color: var(--muted); font-size: .95rem; }
+body { word-break: keep-all; overflow-wrap: anywhere; }
+/* Phone held upright: smaller type, tighter boxes. */
+@media (max-width: 640px) {
+  main { padding: 12px 12px 80px; gap: 12px; }
+  section { padding: 14px 16px; border-radius: 12px; }
+  .state { border-width: 2px; }
+  .state[data-level="down"] #headline { display: none; }   /* the red band above already shows it */
+  h1 { font-size: 1.6rem; }
+  h2 { font-size: 1.1rem; margin-bottom: 6px; }
+  p, li { font-size: 1.02rem; }
+  #summary p { font-size: 1.1rem; }
+  .small { font-size: .85rem; }
+  table { font-size: .92rem; }
+  th, td { padding: 6px 4px; }
+  .pictures { grid-template-columns: minmax(0, 1fr); }
+  .pictures figcaption { font-size: .95rem; }
+  .card span { font-size: 1.02rem; }
+}
+.clockline { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; padding: 10px 16px; font-size: 1.3rem; font-variant-numeric: tabular-nums; }
+.clockline b { color: var(--ok); font-weight: 900; }
+@media (max-width: 640px) { .clockline { padding: 8px 14px; font-size: 1.1rem; } }
+.clockline b[data-state="before"], .clockline b[data-state="break"], .clockline b[data-state="over"] { color: var(--muted); }

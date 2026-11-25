@@ -2,10 +2,22 @@
 (() => {
   const $ = id => document.getElementById(id);
   const MARK = {start_h1: '전반 시작', end_h1: '전반 종료', start_h2: '후반 시작', end_h2: '후반 종료'};
-  let offset = 0, items = [], lastId = null, toastTimer = null;
+  const GOAL = {goal_ours: 'ours', goal_theirs: 'opp'};
+  let offset = 0, items = [], lastId = null, toastTimer = null, lastScored = false;
+  // Score board of the bench screen (POST /api/v1/score). Returns true when the score was changed; a failure never blocks the tag.
+  async function score(body) {
+    try {
+      const now = await fetch('/api/v1/score', {cache: 'no-store', signal: AbortSignal.timeout(4000)}).then(r => r.json());
+      if (!now.session) return false;
+      await post('/api/v1/score', {session: now.session, source: 'manual', ...body});
+      return true;
+    } catch (_) { return false; }
+  }
   const serverNow = () => Date.now() / 1000 + offset;
   const two = n => String(n).padStart(2, '0');
   const mmss = s => `${two(Math.floor(s / 60))}:${two(Math.floor(s % 60))}`;
+  // the particle after a word: 을 when its last syllable ends in a consonant, 를 when it ends in a vowel ("전반 시작을", "후반 종료를")
+  const josa = (word, withFinal, without) => { const c = word.charCodeAt(word.length - 1) - 0xAC00; return c >= 0 && c < 11172 && c % 28 !== 0 ? withFinal : without; };
   const halfName = h => (h === 'h1' ? '전반' : h === 'h2' ? '후반' : '');
 
   function loadPending() { try { return JSON.parse(localStorage.getItem('tagPending') || '[]'); } catch (_) { return []; } }
@@ -27,13 +39,17 @@
 
   async function press(kind) {
     let note = '';
-    if (MARK[kind] && !confirm(`${MARK[kind]}을(를) 지금 시각으로 기록할까요?`)) return;
+    if (MARK[kind] && !confirm(`${MARK[kind]}${josa(MARK[kind], '을', '를')} 지금 기록할까요?`)) return;
     if (kind === 'note') { note = prompt('메모 내용') || ''; if (!note) return; }
     const at = serverNow();
     try {
       const r = await post('/api/v1/analyst-tags', {kind, note});
       setConn(true);
-      toast(`저장: ${r.label} (${r.time})`, r.id);
+      // A goal tag also raises the score of the bench screen, so one press does both. The undo of the toast takes it back again.
+      let scored = false;
+      if (GOAL[kind]) scored = await score({kind: 'goal', team: GOAL[kind]});
+      toast(`저장: ${r.label} (${r.time})${GOAL[kind] ? (scored ? ' · 점수 반영' : ' · 점수는 벤치 화면에서 올리세요') : ''}`, r.id);
+      lastScored = scored;
       if (navigator.vibrate) navigator.vibrate(40);
     } catch (_) {
       const pending = loadPending(); pending.push({kind, note, at}); savePending(pending);
@@ -52,14 +68,8 @@
     if (!left.length) toast(`보관했던 표시 ${pending.length}개를 보냈습니다`);
   }
 
-  function currentClock() {
-    let half = null, since = null;
-    for (const it of items) {
-      if (it.kind === 'start_h1' || it.kind === 'start_h2') { half = it.kind.slice(-2); since = it.epoch; }
-      if ((it.kind === 'end_h1' || it.kind === 'end_h2')) { half = null; since = null; }
-    }
-    $('clock').textContent = half ? `${halfName(half)} ${mmss(serverNow() - since)}` : (items.some(i => i.kind === 'end_h1') && !items.some(i => i.kind === 'start_h2') ? '하프타임' : '경기 시작 전');
-  }
+  // The clock itself is drawn by match-clock.js from the server (GET /api/v1/clock); here it is only asked to look again after a press.
+  function currentClock() { if (window.MatchClock) window.MatchClock.refresh(); }
 
   function render() {
     const filter = $('filter').value, list = $('list'); list.replaceChildren();
@@ -109,8 +119,8 @@
 
   document.querySelectorAll('button[data-kind]').forEach(b => b.addEventListener('click', () => press(b.dataset.kind)));
   $('undo').addEventListener('click', async () => {
-    if (!lastId) return; const id = lastId; lastId = null; $('toast').hidden = true;
-    try { await post('/api/v1/analyst-tags/delete', {id}); } catch (_) { alert('되돌리지 못했습니다.'); }
+    if (!lastId) return; const id = lastId, wasScored = lastScored; lastId = null; lastScored = false; $('toast').hidden = true;
+    try { await post('/api/v1/analyst-tags/delete', {id}); if (wasScored) await score({kind: 'undo'}); } catch (_) { alert('되돌리지 못했습니다.'); }
     refresh();
   });
   $('filter').addEventListener('change', render);
@@ -122,5 +132,27 @@
     refresh();
   });
   $('close').addEventListener('click', () => { $('video').pause(); $('player').close(); });
-  refresh(); setInterval(refresh, 5000); setInterval(currentClock, 1000);
+  // The score of the bench screen, shown beside the clock so one person can work from this page alone.
+  async function showScore() {
+    try { const s = await fetch('/api/v1/score', {cache: 'no-store', signal: AbortSignal.timeout(4000)}).then(r => r.json()); $('tag-score').textContent = s.session ? `${s.ours} : ${s.opp}` : ''; } catch (_) { /* keep the last score */ }
+  }
+  showScore(); setInterval(showScore, 2000);
+  // The newest alert of the bench screen as one line under the clock; a tap opens the bench screen.
+  async function showAlert() {
+    try {
+      const d = await fetch('/api/v1/bench', {cache: 'no-store', signal: AbortSignal.timeout(4000)}).then(r => r.json());
+      const g = window.MatchClock ? window.MatchClock.gate(d) : d;
+      const a = g && g.current, box = $('tag-alert');
+      if (!a) {                                                    // nothing to show: before the first half a short line says why
+        if (g && g.quiet) { box.dataset.priority = ''; const q = document.createElement('small'); q.textContent = g.quiet; box.replaceChildren(q); box.hidden = false; } else box.hidden = true;
+        return;
+      }
+      box.dataset.priority = a.priority || '';
+      const b = document.createElement('b'); b.textContent = `${a.priority_text || '알림'} · ${a.title}`;
+      const s = document.createElement('small'); s.textContent = a.text || '';
+      box.replaceChildren(b, s); box.hidden = false;
+    } catch (_) { /* keep the last alert */ }
+  }
+  showAlert(); setInterval(showAlert, 2000);
+  refresh(); setInterval(refresh, 5000);
 })();

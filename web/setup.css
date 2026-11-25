@@ -1,0 +1,106 @@
+/* Match preparation page (/setup): the look of the final's phone preview (tokens in web/site.css, loaded first). Big buttons, short text.
+   The group that is due now has a yellow border and a yellow number; a finished group or step shows a green ✓. Only the button of the step that is due now stays green (primary). */
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; background: var(--c-bg); color: var(--c-text); font-family: var(--font); word-break: keep-all; overflow-wrap: anywhere; }
+main { max-width: 640px; margin: 0 auto; padding: 12px 16px 24px; display: grid; gap: 14px; }
+header h1 { margin: 0; font-size: var(--fs-2xl); font-weight: 900; line-height: 1.2; }
+header p { margin: 6px 0 0; color: var(--c-mute); line-height: 1.5; }
+.video { position: relative; background: #000; border-radius: var(--r-md); overflow: hidden; aspect-ratio: 16 / 9; border: 1px solid var(--c-line); }
+.video img { display: block; width: 100%; height: 100%; object-fit: contain; }
+.video span { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: var(--c-mute); font-weight: 700; }
+.card { background: var(--c-card-2); border: 1px solid var(--c-line); border-radius: var(--r-md); padding: 12px 14px; display: grid; gap: 10px; }
+.card.warn { border-color: var(--c-amber); background: var(--c-amber-soft); }
+.card.problem { border: 2px solid var(--c-red); background: var(--c-red-soft); }
+label.code { display: grid; gap: 6px; font-size: .95rem; color: var(--c-mute); }
+label.code input { font-size: 1.3rem; letter-spacing: .2em; }
+.card h2 { margin: 0; font-size: 1.15rem; font-weight: 900; }
+.card p { margin: 0; line-height: 1.5; }
+.steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.step { background: var(--c-card-2); border: 1px solid var(--c-line); border-radius: var(--r-md); }
+.step > summary { list-style: none; display: grid; grid-template-columns: 34px minmax(0, 1fr); align-items: center; gap: 10px; min-height: 56px; padding: 8px 12px; cursor: pointer; }
+.step > summary::-webkit-details-marker { display: none; }
+.step > summary:focus-visible { outline: 2px solid var(--c-lamp); outline-offset: 2px; border-radius: var(--r-md); }
+.step .num { width: 30px; height: 30px; border-radius: var(--r-sm); display: flex; align-items: center; justify-content: center; background: var(--c-card); border: 1px solid var(--c-line-2); color: var(--c-mute); font-weight: 900; font-variant-numeric: tabular-nums; }
+.step .title { font-size: 1.08rem; font-weight: 900; }
+.step .sub { display: block; font-size: .9rem; color: var(--c-mute); font-weight: 400; }
+.step.done { border-color: #23523a; }
+.step.done .num { background: var(--c-pitch); border-color: var(--c-pitch); color: var(--c-on-accent); }
+.step.now { border: 2px solid var(--c-lamp); }
+.step.now .num { background: var(--c-lamp); border-color: var(--c-lamp); color: var(--c-on-accent); }
+.step.problem { border: 2px solid var(--c-red); }
+.step.problem .num { background: var(--c-red); border-color: var(--c-red); color: var(--c-on-accent); }
+/* an open step with a problem says the problem in its body in bold (setup.js writes the same words in the title line too): the small copy under the title is hidden while it is open */
+.step.problem[open] > summary .sub { display: none; }
+.step.later { opacity: .6; }
+.body { padding: 0 12px 12px; display: grid; gap: 10px; }
+.body p { margin: 0; line-height: 1.5; }
+.todo { font-size: 1.08rem; font-weight: 900; }
+.msg { min-height: 1.2em; color: var(--c-amber); }
+.msg.bad, .bad { color: var(--c-red-ink); }
+.caution { color: var(--c-amber); }
+.good { color: var(--c-pitch); }
+.small { color: var(--c-mute); font-size: .9rem; margin: 0; }
+button { font: inherit; border-radius: var(--r-md); border: 1px solid var(--c-line-2); background: var(--c-card-2); color: var(--c-text); min-height: 52px; padding: 0 16px; font-size: 1.05rem; font-weight: 700; cursor: pointer; touch-action: manipulation; }
+.card button, .step button { background: var(--c-card); }
+button.big { width: 100%; background: var(--c-pitch); color: var(--c-on-accent); border-color: var(--c-pitch); font-weight: 900; }
+/* one primary button: a green button of a finished or later step looks like the others */
+.gdone button.big, .step.done button.big, .step.later button.big { background: var(--c-card); color: var(--c-text); border-color: var(--c-line-2); font-weight: 700; }
+button.stop { width: 100%; background: transparent; color: var(--c-red-ink); border: 2px solid var(--c-red-ink); }
+button.pick { width: 100%; }
+button.pick[aria-pressed="true"] { border: 2px solid var(--c-pitch); background: var(--c-pitch-soft); color: var(--c-text); }
+button.link { background: none; border: 0; color: var(--c-lamp); min-height: 44px; padding: 0 4px; font-weight: 700; text-decoration: underline; justify-self: start; }
+button:disabled { opacity: .45; cursor: default; }
+input { font: inherit; width: 100%; min-height: 52px; font-size: 1.1rem; padding: 0 12px; border-radius: var(--r-md); background: var(--c-field); color: var(--c-text); border: 1px solid var(--c-line-2); }
+input:focus-visible, button:focus-visible { outline: 2px solid var(--c-lamp); outline-offset: 2px; }
+form { display: grid; gap: 8px; margin: 0; }
+.two { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 8px; }
+.picture { width: 100%; border-radius: var(--r-sm); background: #000; display: block; min-height: 120px; }
+.examples { display: grid; gap: 4px; background: var(--c-field); border: 1px solid var(--c-line); border-radius: var(--r-sm); padding: 8px 10px; font-size: .95rem; }
+.groups { display: grid; gap: 10px; }
+.group { background: var(--c-field); border: 1px solid var(--c-line); border-radius: var(--r-md); padding: 10px; display: grid; gap: 8px; }
+.group h3 { margin: 0; font-size: 1.05rem; font-weight: 900; }
+/* 2026-11-25 colour pick: three or more groups, the own and the opponent group are chosen */
+.group h3 .ds-pill { margin-left: 6px; font-size: 13px; padding: 1px 10px; vertical-align: 2px; }
+.group.chosen { border-color: var(--c-line-2); }
+button.pick.pick-opp[aria-pressed="true"] { border: 2px solid var(--c-red-ink); background: var(--c-red-soft); color: var(--c-text); }
+.reader-after { margin: 4px 0; }
+.pics { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+.pics img { width: 100%; height: 110px; object-fit: contain; background: #000; border-radius: var(--r-sm); }
+.numbers { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.numbers div { background: var(--c-field); border: 1px solid var(--c-line); border-radius: var(--r-md); padding: 8px 10px; text-align: center; }
+.numbers b { display: block; font-size: 1.6rem; font-weight: 900; font-variant-numeric: tabular-nums; }
+.numbers span { color: var(--c-mute); font-size: .9rem; }
+a.go { display: flex; align-items: center; justify-content: center; min-height: 60px; border-radius: var(--r-md); background: var(--c-pitch); color: var(--c-on-accent); font-weight: 900; font-size: 1.15rem; text-decoration: none; }
+a.go.second { background: var(--c-card-2); color: var(--c-text); border: 1px solid var(--c-line-2); font-weight: 700; }
+.spin::after { content: ""; display: inline-block; width: 14px; height: 14px; margin-left: 8px; border: 2px solid var(--c-mute); border-top-color: transparent; border-radius: 50%; animation: spin 1s linear infinite; vertical-align: -2px; }
+@keyframes spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .spin::after { animation: none; } }
+
+/* The three groups in time order (warm-up, just before the kickoff, the kickoff) and the part for trouble. */
+#groups { display: grid; gap: 14px; }
+.gcard { background: var(--c-card); border: 1px solid var(--c-line); border-radius: var(--r-lg); padding: 14px 12px; display: grid; gap: 12px; }
+/* the group due now = the first one not finished */
+.gcard:not(.gdone):not(.trouble) { border: 2px solid var(--c-lamp); }
+.gcard:not(.gdone) ~ .gcard:not(.gdone) { border: 1px solid var(--c-line); }
+.gcard.gdone { border-color: #23523a; }
+.ghead { display: grid; grid-template-columns: 36px minmax(0, 1fr); gap: 10px; align-items: center; }
+.ghead h2 { margin: 0; font-size: 1.2rem; font-weight: 900; line-height: 1.25; }
+.ghead .ghint { margin: 2px 0 0; color: var(--c-lamp); font-weight: 700; font-size: .95rem; }
+.gdone .ghead .ghint { color: var(--c-pitch); }
+.gnum { width: 34px; height: 34px; border-radius: var(--r-sm); display: flex; align-items: center; justify-content: center; background: var(--c-lamp); color: var(--c-on-accent); font-weight: 900; font-size: 1.1rem; font-variant-numeric: tabular-nums; }
+.gcard:not(.gdone) ~ .gcard:not(.gdone) .gnum { background: var(--c-card-2); color: var(--c-mute); border: 1px solid var(--c-line-2); }
+.gcard:not(.gdone) ~ .gcard:not(.gdone) .ghint { color: var(--c-mute); }
+.gdone .gnum { background: var(--c-pitch); color: var(--c-on-accent); }
+.gbody { display: grid; gap: 10px; min-width: 0; }
+.gbody > p { margin: 0; line-height: 1.5; }
+.gbody h3.sub { margin: 6px 0 0; font-size: 1.05rem; font-weight: 900; }
+.card h3 { margin: 0; font-size: 1.05rem; font-weight: 900; }
+.card.done { border-color: var(--c-pitch); background: var(--c-pitch-soft); }
+.strong { font-weight: 700; }
+.numbers.bigger b { font-size: 2.6rem; line-height: 1.1; }
+.numbers.bigger span { font-size: 1rem; }
+button.huge { width: 100%; min-height: 88px; font-size: 1.7rem; font-weight: 900; background: var(--c-pitch); color: var(--c-on-accent); border-color: var(--c-pitch); border-radius: var(--r-lg); }
+.trouble { margin-top: 6px; border: 1px dashed var(--c-line-2); background: transparent; border-radius: var(--r-lg); }
+.trouble h2 { color: var(--c-mute); }

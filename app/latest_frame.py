@@ -4,8 +4,8 @@
 when the analysis takes longer than a frame lasts, the frames in between are thrown away and counted. `get()` gives the newest frame with the moment it was read. The delay of an alert
 is the time from that moment to the moment the alert was written; `DelayStats` keeps those numbers for the heartbeat row of alerts.jsonl.
 A file is paced at its own frame rate (`pace_fps`), otherwise the thread would read it to the end before the analysis has taken a first frame.
-The idea (a reader thread that keeps the latest frame, counts of decoded, delivered and discarded frames) follows an earlier experimental version of this module, rewritten to sit on
-the reconnecting reader of this code.
+The idea (a reader thread that keeps the latest frame, counts of decoded, delivered and discarded frames) follows app/latest_frame.py of the branch claude/direction-reset-1115, rewritten to sit on
+the reconnecting reader of this branch.
 """
 import threading
 import time
@@ -111,7 +111,7 @@ class LatestFrameQueue:
             pass
 
 
-# ---- Reader (earlier version): a reader that owns an open capture and keeps only the latest frame.
+# ---- From the main branch (claude/direction-reset-1115): a reader that owns an open capture and keeps only the latest frame.
 # It is used by scripts/run_live_feedback.py when the capture path of main is chosen; LatestFrameQueue above sits on the reconnecting reader.
 import math
 import time

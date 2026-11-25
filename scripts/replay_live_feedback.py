@@ -1,7 +1,7 @@
 """Replay tracked positions of a recorded half through the live analyzer and measure it, so alert rules can be tuned without a live feed.
 
 python scripts/replay_live_feedback.py <tracks.json> <calibrations.json> <camera> --direction -1 [--team B] [--reference-bg a b tx ty] [--shift-schedule S]
-       [--goals 300,450,500] [--lead 20] [--alerts out.jsonl]
+       [--goals 162,551,648] [--lead 20] [--alerts out.jsonl]
 
 Prints the alerts per kind, and for every confirmed goal whether a box-attack or run alert came in the `lead` seconds before it (the share of goals the live
 rules would have warned about), and how many alerts came outside any goal window (alerts of a kind that is good or bad by itself are not errors, but the numbers show how

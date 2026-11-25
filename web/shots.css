@@ -1,14 +1,25 @@
-body{margin:0;background:#0f1a14;color:#e8f1ea;font-family:'Malgun Gothic',system-ui,sans-serif;line-height:1.5}
-header{padding:12px 16px;border-bottom:1px solid #2f4a39}h1{font-size:1.3rem;margin:0}#progress{margin:.2em 0 0;color:#9db8a4}
-main{display:grid;grid-template-columns:320px 1fr;gap:14px;padding:14px}
+/* Shot tagging page. Colours come from web/site.css (same as the match-day pages). */
+body{margin:0;background:var(--bg,var(--c-bg));color:var(--text,var(--c-text));font-family:system-ui,'Noto Sans KR','Malgun Gothic',sans-serif;line-height:1.5}
+.progress{max-width:1280px;margin:4px auto 0;padding:0 16px;color:var(--muted,var(--c-mute))}
+main{display:grid;grid-template-columns:340px minmax(0,1fr);gap:16px;padding:12px 16px;max-width:1280px;margin:0 auto}
 @media(max-width:860px){main{grid-template-columns:1fr}}
-aside{max-height:calc(100vh - 90px);overflow:auto}
-.filters{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:8px;font-size:.88rem}select,input{background:#16261c;color:#e8f1ea;border:1px solid #2f4a39;border-radius:6px;padding:3px 6px}
-#list{list-style:none;margin:0;padding:0}#list li{padding:7px 10px;margin:4px 0;border:1px solid #2f4a39;border-radius:8px;cursor:pointer;background:#16261c;font-size:.9rem}
-#list li.on{border-color:#6db8ff;background:#1d3a2a}#list li .st{float:right;color:#9ee6b0}#list li.todo .st{color:#ffb4a0}
+main>*{min-width:0}
+aside{max-height:calc(100vh - 150px);overflow:auto}
+@media(max-width:860px){aside{max-height:none;overflow:visible}#list{max-height:50vh;overflow:auto;border-bottom:1px solid var(--line,var(--c-line))}}
+.filters{display:flex;flex-wrap:wrap;gap:8px 12px;margin-bottom:8px;font-size:1rem;align-items:center}
+.filters label{display:flex;align-items:center;gap:8px}
+select,input{background:var(--field,var(--c-field));color:var(--text,var(--c-text));border:1px solid var(--line-2,var(--c-line-2));border-radius:10px;padding:6px 10px}
+#list{list-style:none;margin:0;padding:0}
+#list li{display:flex;align-items:center;min-height:48px;padding:8px 12px;margin:6px 0;border:1px solid var(--line,var(--c-line));border-radius:10px;cursor:pointer;background:var(--panel,var(--c-card));font-size:1rem}
+#list li .st{order:2;margin-left:auto;padding-left:10px;color:var(--ok,var(--c-pitch));white-space:nowrap}
+#list li.on{border-color:var(--link,var(--c-link));background:var(--sel,var(--sel))}#list li.todo .st{color:var(--notice,var(--c-amber))}
+h2{font-size:1.15rem;margin:0 0 8px}
 .two{display:grid;grid-template-columns:1fr 1fr;gap:12px}@media(max-width:860px){.two{grid-template-columns:1fr}}
-video{width:100%;border-radius:8px;background:#000}svg{background:#1b4a2a;border-radius:8px;cursor:crosshair}
-.buttons{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0}.buttons button{background:#244f33;color:#e8f1ea;border:1px solid #3d7a55;border-radius:8px;padding:10px 14px;font-size:1rem;cursor:pointer}
-.buttons button.warn{background:#4a2a24;border-color:#7a4a3d}.buttons button.on{outline:2px solid #6db8ff}
-.note{color:#9db8a4;font-size:.88rem}.saved{color:#9ee6b0;min-height:1.4em}
-details{margin-top:12px;border:1px solid #2f4a39;border-radius:8px;padding:6px 10px}.extra-form label{display:block;margin:6px 0}
+video{width:100%;border-radius:10px;background:#000;display:block}svg{background:#1b4a2a;border-radius:10px;cursor:crosshair;display:block}
+.buttons{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;margin:10px 0}
+.buttons button{min-height:52px;background:var(--panel-2,var(--c-card-2));color:var(--text,var(--c-text));border:2px solid var(--line-2,var(--c-line-2));border-radius:10px;padding:8px 10px;font-size:1rem;font-weight:700;cursor:pointer}
+.buttons button.warn{border-color:var(--urgent,var(--c-red))}.buttons button.on{border-color:var(--ok,var(--c-pitch));background:#173325}
+.note{color:var(--muted,var(--c-mute));font-size:.95rem}.saved{color:var(--ok,var(--c-pitch));min-height:1.4em;font-weight:700}
+details{margin-top:12px;border:1px solid var(--line,var(--c-line));border-radius:10px;padding:4px 12px;background:var(--panel,var(--c-card))}
+.extra-form label{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:8px 0}
+@media(max-width:640px){main{padding:8px 12px}.buttons{grid-template-columns:1fr 1fr}.filters label:not(.check){flex:1 1 100%;display:grid;grid-template-columns:3em minmax(0,1fr)}}

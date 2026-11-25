@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>하프라인 분석</title>
+<link rel="stylesheet" href="/site.css">
+<style>
+  /* One column of large links, grouped by when they are used: before the match, during it, at half-time, after it. Tokens and parts: web/site.css.
+     Each group gets a yellow number mark (a CSS counter, the words of the page are unchanged); the screen to open first in a group has a green edge. */
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--c-bg); color: var(--c-text); font-family: var(--font); word-break: keep-all; }
+  main { max-width: 720px; margin: 0 auto; padding: 18px 16px 32px; display: grid; gap: 22px; counter-reset: group; }
+  h1 { margin: 0; font-size: var(--fs-2xl); font-weight: 900; line-height: 1.2; }
+  main > section { counter-increment: group; }
+  h2 { display: flex; align-items: center; gap: 10px; margin: 0 0 10px; font-size: 1.15rem; font-weight: 900; color: var(--c-text); }
+  h2::before { content: counter(group); min-width: 28px; padding: 0 6px; border-radius: var(--r-sm); background: var(--c-lamp); color: var(--c-on-accent); font-size: 15px; line-height: 28px; text-align: center; }
+  .list { display: grid; gap: 8px; }
+  a.go { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 2px 12px; min-height: 60px; padding: 10px 16px; border-radius: var(--r-md); background: var(--c-card); border: 1px solid var(--c-line); color: var(--c-text); text-decoration: none; }
+  a.go b { font-size: 1.12rem; font-weight: 900; }
+  a.go span { grid-column: 1; color: var(--c-mute); font-size: .92rem; }
+  a.go i { grid-row: 1 / span 2; grid-column: 2; font-style: normal; color: var(--c-lamp); font-size: 1.4rem; font-weight: 900; }
+  a.go.main { border: 1px solid var(--c-line); box-shadow: inset 4px 0 0 var(--c-pitch); }
+  a.go:focus-visible { outline: 2px solid var(--c-lamp); outline-offset: 2px; }
+  .roles { display: grid; gap: 8px; }
+  .role { background: var(--c-card); border: 1px solid var(--c-line); border-radius: var(--r-lg); padding: 4px 16px; }
+  .role summary { display: grid; gap: 2px; padding: 10px 0; min-height: 44px; cursor: pointer; list-style: none; }
+  .role summary::-webkit-details-marker { display: none; }
+  .role summary b { font-size: 1.12rem; font-weight: 900; }
+  .role summary b::after { content: " ▾"; color: var(--c-lamp); font-weight: 400; }
+  .role[open] summary b::after { content: " ▴"; }
+  .role summary span { color: var(--c-mute); font-size: .92rem; }
+  .role summary:focus-visible { outline: 2px solid var(--c-lamp); outline-offset: 2px; }
+  .role ul { margin: 0 0 12px; padding-left: 18px; display: grid; gap: 6px; font-size: 1rem; line-height: 1.5; }
+  .role li::marker { color: var(--c-lamp); }
+  .role a { color: var(--c-link); font-weight: 700; }
+  @media (min-width: 640px) { .list { grid-template-columns: 1fr 1fr; } }
+</style>
+</head>
+<body class="match-day">
+<main>
+  <h1>하프라인 분석</h1>
+  <section>
+    <h2>역할별로 볼 화면</h2>
+    <div class="roles">
+      <details class="role" open>
+        <summary><b>혼자 운영할 때</b><span>장면 표시 화면 하나로 다 합니다</span></summary>
+        <ul>
+          <li>경기 전: <a href="/setup">경기 준비</a>를 열고 위에서부터 차례로 누릅니다.</li>
+          <li>경기 중: <a href="/tag">장면 표시</a>만 켜 둡니다. 위 단추는 "전반 시작"과 "후반 종료"입니다. "전반 끝"과 "후반 시작"은 아래 띠에 있습니다. 골은 점수도 함께 오릅니다.</li>
+          <li>분석이 멈추면 같은 화면 맨 위에 빨간 띠가 뜹니다.</li>
+          <li>코치에게는 <a href="/bench">벤치</a> 화면을 열어 줍니다.</li>
+        </ul>
+      </details>
+      <details class="role">
+        <summary><b>코치</b><span>벤치 화면 하나만 봅니다</span></summary>
+        <ul>
+          <li><a href="/bench">벤치</a>: 점수, 지금 알림, 선수 위치를 봅니다. 알림은 그림과 화살표로 나옵니다.</li>
+          <li>알림이 뜨면 "도움됨" 또는 "아님"을 누릅니다.</li>
+          <li>하프타임에 <a href="/halftime">전반 보고서</a>를 엽니다(우리 팀 모양, 상대 팀).</li>
+          <li>경기가 끝나면 <a href="/replay">지난 경기 다시보기</a>에서 보고 싶은 곳을 다시 봅니다.</li>
+        </ul>
+      </details>
+      <details class="role">
+        <summary><b>기록 담당</b><span>장면과 골을 단추로 남깁니다</span></summary>
+        <ul>
+          <li><a href="/tag">장면 표시</a>: 위의 "전반 시작"과 "후반 종료", 아래 띠의 "전반 끝"과 "후반 시작"을 그때그때 누릅니다(경기 시계).</li>
+          <li>슛, 코너킥, 좋은 장면, 위험 장면을 장면이 끝난 직후에 누릅니다.</li>
+          <li>골을 누르면 벤치 화면의 점수도 함께 오릅니다. 잘못 눌렀으면 바로 "되돌리기"를 누릅니다.</li>
+        </ul>
+      </details>
+      <details class="role">
+        <summary><b>분석 담당</b><span>분석이 도는지 지키고, 전반과 후반을 넘깁니다</span></summary>
+        <ul>
+          <li>경기 전: <a href="/setup">경기 준비</a> 화면을 위에서부터 차례로 누릅니다(새 경기, 팀 색, 분석 시작).</li>
+          <li>경기 중: <a href="/watch">분석 상태</a>를 켜 둡니다. 빨간 띠가 뜨면 송출과 분석 프로그램을 확인합니다.</li>
+          <li>전반이 끝나면 아래 띠의 "전반 끝 · 보고서 만들기", 후반이 시작되면 "후반 시작 · 공격 방향 바꿈"을 누릅니다.</li>
+          <li>점수가 틀렸으면 벤치 화면의 "우리 골", "상대 골", "취소"로 고칩니다.</li>
+          <li>경기 뒤: <a href="/alerts">알림 평가</a>와 <a href="/train">학습 장면 확인</a>.</li>
+        </ul>
+      </details>
+      <details class="role">
+        <summary><b>촬영 담당</b><span>휴대폰 송출을 지킵니다</span></summary>
+        <ul>
+          <li>휴대폰을 같은 자리에 고정하고 송출을 시작합니다.</li>
+          <li><a href="/live">영상</a>에서 송출이 들어오는지 확인합니다. 영상은 부드럽게 나오고, 안 되면 사진으로 바뀝니다.</li>
+          <li>송출이 끊기면 바로 다시 연결합니다. 2분 넘게 끊기면 분석 담당에게 알립니다.</li>
+        </ul>
+      </details>
+    </div>
+  </section>
+  <section>
+    <h2>경기 전</h2>
+    <div class="list">
+      <a class="go main" href="/setup"><b>경기 준비</b><span>새 경기, 영상, 팀 색, 분석 시작을 차례로</span><i aria-hidden="true">›</i></a>
+      <a class="go" href="/team-select"><b>팀 색 고르기</b><span>우리 팀이 어느 쪽인지 한 번 누릅니다</span><i aria-hidden="true">›</i></a>
+    </div>
+  </section>
+  <section>
+    <h2>경기 중</h2>
+    <div class="list">
+      <a class="go main" href="/bench"><b>벤치</b><span>점수, 알림(그림과 화살표), 선수 위치</span><i aria-hidden="true">›</i></a>
+      <a class="go" href="/tag"><b>장면 표시</b><span>슛, 골, 좋은 장면과 전반·후반 단추</span><i aria-hidden="true">›</i></a>
+      <a class="go" href="/live"><b>영상</b><span>부드러운 영상으로 봅니다. 안 되면 사진</span><i aria-hidden="true">›</i></a>
+      <a class="go" href="/watch"><b>분석 상태</b><span>분석이 멈췄는지 확인합니다</span><i aria-hidden="true">›</i></a>
+    </div>
+  </section>
+  <section>
+    <h2>하프타임</h2>
+    <div class="list">
+      <a class="go" href="/halftime"><b>전반 보고서</b><span>팀 모양과 눈에 띈 점</span><i aria-hidden="true">›</i></a>
+    </div>
+  </section>
+  <section>
+    <h2>경기 뒤</h2>
+    <div class="list">
+      <a class="go main" href="/replay"><b>지난 경기 다시보기</b><span>경기를 고르고 원하는 곳으로 옮겨 봅니다. 시험 녹화는 접혀 있습니다</span><i aria-hidden="true">›</i></a>
+      <a class="go" href="/alerts"><b>알림 평가</b><span>알림이 맞았는지 판정합니다</span><i aria-hidden="true">›</i></a>
+      <a class="go" href="/shots"><b>슛 표시</b><span>슛 장면과 결과를 남깁니다</span><i aria-hidden="true">›</i></a>
+      <a class="go" href="/report"><b>영상 보고서</b><span>녹화 영상을 올려 분석합니다</span><i aria-hidden="true">›</i></a>
+      <a class="go" href="/train"><b>학습 장면 확인</b><span>놓친 선수와 팀을 고칩니다</span><i aria-hidden="true">›</i></a>
+    </div>
+  </section>
+  <section>
+    <h2>자료 더 보기</h2>
+    <div class="list">
+      <a class="go" href="/cards"><b>선수 카드</b><span>선수마다 달린 거리와 속도</span><i aria-hidden="true">›</i></a>
+      <a class="go" href="/players"><b>선수 확인</b><span>추적한 사람이 누구인지 고릅니다</span><i aria-hidden="true">›</i></a>
+      <a class="go" href="/events"><b>킥오프와 골</b><span>후보 장면이 무엇인지 고릅니다</span><i aria-hidden="true">›</i></a>
+      <a class="go" href="/ball"><b>공 위치</b><span>장면마다 공이 어디 있는지 찍습니다</span><i aria-hidden="true">›</i></a>
+      <a class="go" href="/review-differences"><b>비교 장면</b><span>판단이 필요한 장면에 답합니다</span><i aria-hidden="true">›</i></a>
+    </div>
+  </section>
+</main>
+<script src="/nav.js"></script>
+</body>
+</html>

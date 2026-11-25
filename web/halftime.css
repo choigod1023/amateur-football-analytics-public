@@ -1,0 +1,64 @@
+/* The half-time report: the look of the final's phone preview (work/match-1125/preview, build_preview2.py and its build_page.py styles), copied here.
+   No web font is loaded (the server page loads nothing from outside): the preview's "Noto Sans KR" is used when the phone has it, else the system font. */
+/* The colours and fonts (--night, --panel, --panel2, --line, --chalk, --mute, --pitch, --red, --lamp, --grass, --chalkline, --display, --body) are the tokens of
+   web/site.css (loaded first, 2026-11-25): the same values this file had, now shared by every page. */
+*{box-sizing:border-box} [hidden]{display:none!important}
+body{margin:0;background:var(--night);color:var(--chalk);font-family:var(--body);font-size:16px;line-height:1.6;word-break:keep-all;overflow-wrap:anywhere;
+ padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 96px}
+main{max-width:920px;margin:0 auto;display:grid;grid-template-columns:minmax(0,1fr);gap:22px} main>*,.card>*{min-width:0}
+.score{background:radial-gradient(120% 140% at 50% -40%,#2b4a35 0%,var(--panel) 60%);border:1px solid var(--line);border-radius:18px;padding:22px 20px;display:grid;gap:10px;text-align:center}
+.score .teams{display:flex;justify-content:center;align-items:center;gap:14px;flex-wrap:wrap;font-family:var(--display);font-weight:900;font-size:clamp(20px,5vw,30px)}
+.score .num{font-family:var(--display);font-weight:900;font-size:clamp(40px,12vw,72px);line-height:1;color:var(--chalk);letter-spacing:4px;font-variant-numeric:tabular-nums}
+.score .meta{color:var(--mute);font-size:14px}
+.g{color:var(--pitch)} .r{color:var(--red)} .y{color:var(--lamp)}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:18px;display:grid;gap:10px;min-width:0}
+h2{margin:0;font-family:var(--display);font-weight:900;font-size:clamp(20px,5.4vw,26px);line-height:1.25;text-wrap:balance}
+.ans{margin:0;font-size:17px;font-weight:700;max-width:62ch}
+.vcap{font-size:13px;color:var(--mute);margin:0}
+figure{margin:0;min-width:0}
+figcaption{font-size:13px;color:var(--mute);margin-top:4px}
+.mm{width:100%;height:auto;display:block;border-radius:12px}
+.pt{font:700 11px var(--body);fill:var(--chalk);paint-order:stroke;stroke:var(--night);stroke-width:3px;stroke-linejoin:round}
+.zt{font:700 11px var(--body);fill:var(--lamp);paint-order:stroke;stroke:var(--night);stroke-width:3px}
+.gt{font:700 11px var(--body);fill:var(--chalk);paint-order:stroke;stroke:var(--night);stroke-width:3px}
+.lt{font:700 12px var(--body);fill:var(--chalk);paint-order:stroke;stroke:var(--night);stroke-width:3px}
+.legend{font-size:13px;color:var(--mute);display:flex;gap:12px;flex-wrap:wrap}
+.legend i{display:inline-block;width:11px;height:11px;border-radius:50%;vertical-align:-1px;margin-right:4px}
+.legend u{display:inline-block;width:18px;border-top:2px dashed var(--lamp);vertical-align:3px;margin-right:4px;text-decoration:none}
+.legend s{display:inline-block;width:18px;border-top:2px solid var(--pitch);vertical-align:3px;margin-right:4px;text-decoration:none}
+.phh{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.no{font-weight:900;font-size:15px;color:var(--night);background:var(--lamp);border-radius:9px;min-width:28px;text-align:center;line-height:28px}
+.pchip{font-weight:900;font-size:15px;padding:3px 14px;border-radius:999px;color:var(--night);background:var(--pitch)}
+.pchip.y{background:var(--lamp)} .pchip.r{background:var(--red)}
+.ptime{font-weight:700;font-size:15px;color:var(--mute);font-variant-numeric:tabular-nums}
+.sum{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.sum div{background:var(--panel2);border:1px solid var(--line);border-radius:14px;padding:10px 6px;text-align:center}
+.sum b{display:block;font-family:var(--display);font-weight:900;font-size:18px}
+.sum span{font-size:13px;color:var(--mute)}
+.rule3{margin:0;padding:0;list-style:none;display:grid;gap:8px;counter-reset:k}
+.rule3 li{counter-increment:k;display:grid;grid-template-columns:32px minmax(0,1fr);gap:10px;font-size:16px;font-weight:700;align-items:start}
+.rule3 .vcap{font-weight:400;margin-top:2px}
+.rule3 li::before{content:counter(k);font-weight:900;font-size:18px;color:var(--night);background:var(--lamp);border-radius:9px;text-align:center;line-height:32px}
+.swipe{display:grid;grid-auto-flow:column;grid-auto-columns:86%;gap:10px;overflow-x:auto;scroll-snap-type:x mandatory;padding-bottom:6px;overscroll-behavior-x:contain}
+.swipe>figure{scroll-snap-align:start;background:var(--panel2);border-radius:14px;padding:8px}
+.swipe .phh{margin-bottom:6px}
+.two{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.bars{display:grid;gap:6px}
+.bars .row{display:grid;grid-template-columns:7.5em minmax(0,1fr) 2.2em;gap:8px;align-items:center;font-size:14px}
+.bars .bar{height:14px;border-radius:4px;background:var(--lamp);min-width:3px}
+.bars .n{text-align:right;font-variant-numeric:tabular-nums;color:var(--mute)}
+.state{background:var(--panel2);border:1px solid var(--line);border-radius:14px;padding:12px 14px;display:grid;gap:8px}
+.state p{margin:0;font-weight:700}
+.progress{height:6px;border-radius:999px;background:var(--line);overflow:hidden}
+.progress i{display:block;height:100%;width:40%;background:var(--lamp);border-radius:999px;animation:slide 1.2s ease-in-out infinite}
+@keyframes slide{0%{transform:translateX(-100%)}100%{transform:translateX(260%)}}
+@media (prefers-reduced-motion:reduce){.progress i{animation:none;width:100%}}
+.nodata{font-weight:700;color:var(--mute)}
+details{border-top:1px dashed var(--line);padding-top:8px}
+summary{cursor:pointer;color:var(--lamp);font-weight:700;font-size:15px;min-height:40px;display:flex;align-items:center}
+summary:focus-visible{outline:2px solid var(--lamp);outline-offset:3px;border-radius:4px}
+details ul,details ol{margin:6px 0 0;padding-left:1.2em;font-size:14.5px;display:grid;gap:4px}
+.foot{font-size:13px;color:var(--mute);max-width:70ch}
+@media (min-width:700px){.swipe{grid-auto-flow:row;grid-auto-columns:auto;grid-template-columns:repeat(3,minmax(0,1fr));overflow:visible}}
+/* the first / second half choice (2026-11-25): two buttons of web/site.css (.ds-btn, the chosen one .is-primary), shown once the second half has started */
+.half-pick{display:grid;grid-template-columns:1fr 1fr;gap:var(--s-2)} .half-pick .ds-btn{width:100%}

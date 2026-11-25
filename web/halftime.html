@@ -5,27 +5,25 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex">
 <title>하프타임 보고서</title>
-<link rel="stylesheet" href="/watch.css">
+<link rel="stylesheet" href="/site.css">
+<link rel="stylesheet" href="/halftime.css">
 </head>
-<body>
+<body class="match-day">
 <main>
-  <section class="state" data-level="ok">
-    <h1 id="title">하프타임 보고서</h1>
-    <p class="small" id="meta"></p>
-    <div id="summary"></div>
-  </section>
-  <section id="missing" hidden><h2>이 구간 자료 없음</h2><p id="missing-text"></p><ul id="missing-list"></ul></section>
-  <section><h2>팀 모양</h2><p class="small">파란 동그라미가 우리 팀, 붉은 테두리가 상대 팀입니다. 우리 팀은 오른쪽 골대를 향해 공격합니다. 한 구간 동안 선수들이 주로 선 자리입니다.</p><div id="pictures" class="pictures"></div></section>
-  <section id="lineup" hidden><h2>라인업</h2><p id="formation"></p><div id="cards" class="cards"></div></section>
-  <section><h2>눈에 띈 점</h2><ul id="problems"></ul></section>
-  <section><h2>상대가 들어온 곳</h2><ul id="opponent"></ul></section>
-  <section><h2>박스 침투 (우리 공격)</h2><ul id="box"></ul></section>
-  <section><h2>침투 허용 (상대 공격)</h2><ul id="conceded"></ul></section>
-  <section><h2>전반에 나온 알림</h2><ul id="alerts"></ul></section>
-  <section><h2>후반 시작 전에 확인할 것</h2><ol id="second"></ol></section>
-  <p class="small">공의 움직임은 보지 않고 선수들의 위치만으로 정리한 내용입니다. 알림과 마찬가지로 지시가 아니라 관찰입니다.</p>
-  <p class="small"><a href="/watch">감시 화면으로</a></p>
+  <nav class="half-pick" id="half-pick" aria-label="전반 후반 고르기" hidden>
+    <button class="ds-btn" type="button" id="half-1" aria-pressed="true">전반</button>
+    <button class="ds-btn" type="button" id="half-2" aria-pressed="false">후반</button>
+  </nav>
+  <header class="score">
+    <div class="teams"><span>우리</span><span class="num" id="score">- : -</span><span>상대</span></div>
+    <div class="meta" id="status">보고서 만드는 중</div>
+  </header>
+  <section class="state" id="busy" aria-live="polite"><p id="busy-text">보고서 만드는 중 (보통 몇 초)</p><div class="progress" aria-hidden="true"><i></i></div></section>
+  <div id="blocks"></div>
+  <details class="card" id="old" hidden><summary>후반 시작 전에 확인할 것 · 글로 된 요약</summary><ol id="old-second"></ol><ul id="old-summary"></ul></details>
+  <p class="foot">선수 위치만으로 정리한 관찰입니다(모델 판정). 공의 움직임은 보지 않았습니다. 장면의 설명은 영상으로 확인한 뒤에 씁니다.</p>
 </main>
 <script src="/halftime.js"></script>
+<script src="/nav.js"></script>
 </body>
 </html>

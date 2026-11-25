@@ -90,7 +90,7 @@ def _constrained_lines(depths, lines):
 
 
 def name_lines(places):
-    """10 places (x, y) -> (formation text such as '4-4-2', [(label, x, y)]) from the defence to the attack, each line from the team's left to its right."""
+    """10 places (x, y) -> (formation text such as '3-4-1-2', [(label, x, y)]) from the defence to the attack, each line from the team's left to its right."""
     ordered = sorted(places)
     depths = [p[0] for p in ordered]
     three = _constrained_lines(depths, 3)
@@ -166,7 +166,7 @@ def players_per_line(sizes, limits, total=10):
 
 
 def shape_of(records, key, direction):
-    """One block -> {'gk': (x, y, filled), 'places': [(label, x, y)], 'text': '4-4-2', 'depth': mean depth, 'points': n} or None.
+    """One block -> {'gk': (x, y, filled), 'places': [(label, x, y)], 'text': '3-4-1-2', 'depth': mean depth, 'points': n} or None.
     The number of players of a line is the share of all detections that fell into the line (times 10), so a part of the pitch where players are found more often does not get more players."""
     gk_points, field = split_points(records, key, direction)
     if len(field) < MIN_POINTS:

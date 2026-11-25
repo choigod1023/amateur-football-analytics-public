@@ -1,5 +1,5 @@
 <#
-  Keep the review and report server running: start it at logon and start it again if it stops (Windows PowerShell, run by the scheduled task <SCHEDULED_TASK>).
+  Keep the review and report server running: start it at logon and start it again if it stops (Windows PowerShell, run by the scheduled task FootballReviewServer).
 
   - Waits for the server's network address (config "bind") to exist, then starts the server with scripts/run_review_server.ps1.
   - Backs up the store only when the newest backup is older than 6 hours (every start would add about 1 GB), never deletes a backup.

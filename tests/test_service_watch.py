@@ -152,3 +152,47 @@ def test_pid_alive_sees_a_running_and_a_finished_process():
 
 def test_length_text_is_in_words():
     assert length_text(5) == '5초' and length_text(125) == '2분 5초' and length_text(3700) == '1시간 1분'
+
+
+def lost_row(t=6.0):
+    return {**status_record('no_input', t)}
+
+
+def back_row(t=40.0):
+    return {**status_record('input_back', t)}
+
+
+def test_heartbeats_written_while_the_run_waits_for_video_do_not_end_the_outage(tmp_path):
+    # 2026-11-24 rehearsal: no_input, then a heartbeat 2 s later (the run keeps writing them while the reader thread waits): the red band must stay
+    watch, clock, _ = make(tmp_path)
+    write_rows(tmp_path, 's1', [beat(), lost_row(), beat(), beat()], clock.now - 1)
+    down = watch.poll()
+    assert down['state'] == 'down' and down['cause'] == 'video_lost'
+    clock.now += 10
+    write_rows(tmp_path, 's1', [beat(), lost_row(), beat(), beat(), beat()], clock.now - 1)
+    assert watch.poll()['state'] == 'down'
+    assert len(watch.listing()) == 1 and watch.listing()[0]['open']
+
+
+def test_the_outage_ends_when_the_run_writes_input_back_and_is_ok_again_with_the_next_heartbeat(tmp_path):
+    watch, clock, _ = make(tmp_path)
+    write_rows(tmp_path, 's1', [beat(), lost_row(), beat()], clock.now - 1)
+    assert watch.poll()['state'] == 'down'
+    clock.now += 20
+    write_rows(tmp_path, 's1', [beat(), lost_row(), beat(), back_row(), beat()], clock.now - 1)
+    assert watch.poll()['state'] == 'ok' and not watch.listing()[0]['open']
+
+
+def test_a_new_process_of_the_run_ends_a_lost_input_of_the_old_one(tmp_path):
+    watch, clock, _ = make(tmp_path)
+    write_rows(tmp_path, 's1', [beat(111), lost_row(), beat(111)], clock.now - 1)
+    assert watch.poll()['state'] == 'down'
+    clock.now += 20
+    write_rows(tmp_path, 's1', [beat(111), lost_row(), beat(111), beat(222)], clock.now - 1)
+    assert watch.poll()['state'] == 'ok'
+
+
+def test_a_loss_before_any_heartbeat_stays_red_while_the_same_process_writes_heartbeats(tmp_path):
+    watch, clock, _ = make(tmp_path)
+    write_rows(tmp_path, 's1', [lost_row(), beat(111), beat(111)], clock.now - 1)
+    assert watch.poll()['state'] == 'down'

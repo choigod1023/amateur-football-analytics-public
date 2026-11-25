@@ -5,7 +5,7 @@ python scripts/hw_crash_report.py [--logs monitor/logs] [--gap-seconds 60] [--mi
 Reads the CSV files of monitor/log_hw.ps1 (one row about every 5 s: GPU temperature, power, load, clock, throttle reason, CPU load, free memory). A gap longer than --gap-seconds is a stop of the
 logger: a normal shutdown, a restart, or a power loss. For each gap the script prints the last row before it, the average and highest values of the last --minutes minutes, and the normal values of
 the whole log (median and highest), so a rise before the stop stands out. It cannot tell a normal shutdown from a power loss: compare the gap times with the Windows events (Kernel-Power 41 =
-unexpected shutdown; 1074 = shutdown asked by a user or the system). The log has no CPU temperature and no voltages (HWiNFO is needed for these).
+unexpected shutdown; 1074 = shutdown asked by a user or the system; see wiki/hardware-shutdown-1118.md). The log has no CPU temperature and no voltages (HWiNFO is needed for these).
 """
 import argparse, csv, datetime as dt, glob, statistics
 from pathlib import Path

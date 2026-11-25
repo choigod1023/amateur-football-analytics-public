@@ -1,9 +1,9 @@
-import sys, os, json, collections, time
+import sys, json, collections, time
+sys.path.insert(0, __import__('os').path.dirname(__import__('os').path.dirname(__import__('os').path.abspath(__file__))))
 from pathlib import Path
-sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 import cv2, numpy as np
 from app.training_labels import TrainingLabels
-store = Path(os.environ.get('REVIEW_STORE', 'work/human-labels/public-own-match-review-20261111'))
+store = Path(__import__('os').environ['FOOTBALL_REVIEW_DIR'])
 tl = TrainingLabels(store)
 cal = json.load(open(store/'calibration'/'calibrations.json', encoding='utf-8'))
 scenes = [s for s in tl.scene_queue() if s['camera']]

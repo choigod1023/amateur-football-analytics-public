@@ -33,6 +33,7 @@ from app.pitch_map import feet_to_metres, fit  # noqa: E402
 from app.team_role_features import FEATURE_NAMES, box_features  # noqa: E402
 from app.team_role_infer import LETTER, load_model, predict  # noqa: E402
 from app.team_color_profile import ProfileClassifier, load_profile, shirt_colour  # noqa: E402
+from app.small_box_team import SmallBoxTeam, reader_decision  # noqa: E402
 from app.track_vote import TRACKER_SETTINGS  # noqa: E402
 import track_review_clip as tile_detector  # noqa: E402
 
@@ -43,10 +44,13 @@ TEAM_BGR = {'A': (74, 216, 255), 'B': (255, 198, 124)}
 class TeamVotes:
     """A running vote per track: the label is the one most often seen so far, once at least `minimum` frames agree."""
 
-    def __init__(self, classifier=None, minimum=3, profile=None, own_letter='B', other_letter='A', neon_band=None, neon_min=0.22, dark_min=0.30):
+    def __init__(self, classifier=None, minimum=3, profile=None, own_letter='B', other_letter='A', neon_band=None, neon_min=0.22, dark_min=0.30, small_box_team=0.0, switch_streak=0, small_box_all=False):
+        self.switch_streak = int(switch_streak or 0)     # --team-vote-switch: 0 = off (the vote is cumulative for the whole life of a track)
+        self.against, self.switches = {}, 0               # per track: readings in a row that said the other team; number of switches made
         self.model = load_model(classifier) if classifier else None
         self.profile = ProfileClassifier(profile) if profile else None      # the team colours the coach chose for this match (--team-profile); replaces the model and the fixed colour rule
         self.profile_letters = {'own': own_letter, 'opponent': other_letter}
+        self.small = SmallBoxTeam(profile, small_box_team, all_sizes=small_box_all) if profile and small_box_team > 0 else None    # --small-box-team: 20-29 px boxes (--small-box-team-all: every box from 20 px) read by bib pixel share (app/small_box_team.py)
         self.own_letter_, self.other_letter_ = own_letter, other_letter
         self.votes, self.minimum = {}, minimum
         self.neon_band, self.neon_min, self.dark_min = neon_band, neon_min, dark_min    # --neon-band: this venue's own hue band for the bibs (the first match's band 22-44 misses greener bibs)
@@ -54,31 +58,48 @@ class TeamVotes:
         self.dark = FEATURE_NAMES.index('dark')
 
     def observe(self, tid, frame, box):
+        letter = self.letter_of(frame, box)
+        if letter:
+            current = self.label(tid) if self.switch_streak else None
+            self.votes.setdefault(tid, Counter())[letter] += 1
+            if self.switch_streak:
+                self._follow_switch(tid, letter, current)
+
+    def _follow_switch(self, tid, letter, current):
+        """--team-vote-switch N: a track number can pass from one person to another when two players cross (11-20: 7 of the 9 red-bib points
+        the user marked as not ours were numbers that had moved from a green-bib player to a red-bib one, and the cumulative vote kept the old letter).
+        When the track already has a letter and N readings in a row say the other team, the old votes are dropped and the track takes the new letter.
+        Unclear and unread frames (letter None) never reach this method, so they neither count nor break the run; a reading of the current letter breaks it."""
+        if current is None or letter == current:
+            self.against.pop(tid, None)
+            return
+        run = self.against.get(tid, 0) + 1
+        if run >= self.switch_streak:
+            self.votes[tid] = Counter({letter: run})
+            self.against.pop(tid, None)
+            self.switches += 1
+        else:
+            self.against[tid] = run
+
+    def letter_of(self, frame, box):
+        """Team letter of one box in this frame by the same rule as the vote, without voting (None = unclear)."""
         h, w = frame.shape[:2]
         if self.profile:
-            side = self.profile.classify(shirt_colour(frame, box))
-            if side:
-                self.votes.setdefault(tid, Counter())[self.profile_letters[side]] += 1
-            return
+            side = self.small.classify_box(frame, box) if self.small and self.small.applies(box) else self.profile.classify(shirt_colour(frame, box))
+            return self.profile_letters[side] if side else None
         features = box_features(frame, [box[0] / w, box[1] / h, box[2] / w, box[3] / h])
         if self.neon_band and not self.model:
             bh, bw = box[3] - box[1], box[2] - box[0]
             patch = frame[int(box[1] + .18 * bh):int(box[1] + .55 * bh) + 1, int(box[0] + .2 * bw):int(box[2] - .2 * bw) + 1]
             if patch.size == 0:
-                return
+                return None
             hsv = cv2.cvtColor(patch, cv2.COLOR_BGR2HSV).reshape(-1, 3)
             share = ((hsv[:, 1] > 90) & (hsv[:, 2] > 110) & (hsv[:, 0] >= self.neon_band[0]) & (hsv[:, 0] <= self.neon_band[1])).mean()
-            letter = 'A' if share >= self.neon_min else ('B' if features[self.dark] >= self.dark_min else None)
-            if letter:
-                self.votes.setdefault(tid, Counter())[letter] += 1
-            return
+            return 'A' if share >= self.neon_min else ('B' if features[self.dark] >= self.dark_min else None)
         if self.model:
             probabilities = predict(self.model, features[None])[0]
-            letter = LETTER.get(self.model['classes'][int(np.argmax(probabilities))])
-        else:
-            letter = 'A' if features[self.neon] >= 0.10 else ('B' if features[self.dark] >= 0.30 else None)
-        if letter:
-            self.votes.setdefault(tid, Counter())[letter] += 1
+            return LETTER.get(self.model['classes'][int(np.argmax(probabilities))])
+        return 'A' if features[self.neon] >= 0.10 else ('B' if features[self.dark] >= 0.30 else None)
 
     def label(self, tid):
         counts = self.votes.get(tid)
@@ -199,6 +220,27 @@ def lane_picture(frame, detail, boxes):
     return image
 
 
+def link_options(args):
+    """The tracker linking rules asked for on the command line (app/track_link.py); all off by default."""
+    for name in ('link_r0', 'link_vmax', 'link_max_age', 'link_margin', 'link_decay_half_life'):
+        if getattr(args, name) < 0:
+            raise SystemExit(f'--{name.replace("_", "-")} must not be negative.')
+    return {'pitch_link': bool(args.link_pitch), 'revive': bool(args.link_revive), 'team_gate': bool(args.link_team_gate),
+            'decay_half_life': args.link_decay_half_life or None, 'r0': args.link_r0, 'vmax': args.link_vmax,
+            'max_age_s': args.link_max_age or None, 'margin': args.link_margin}
+
+
+def link_inputs(found, frame, fitted, frame_shift, bg, votes, team_gate):
+    """Foot points in pitch metres (nan when behind the camera; no pitch-edge limit) and, with the team gate, the shirt-colour letter of every detection."""
+    feet = np.full((len(found), 2), np.nan)
+    for i, d in enumerate(found):
+        point = feet_to_metres(fitted, d[:4], frame.shape[1], frame.shape[0], frame_shift, bg, margin=float('inf'))
+        if point is not None:
+            feet[i] = point
+    teams = [votes.letter_of(frame, d[:4]) for d in found] if team_gate else None
+    return feet, teams
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('source', help='video file, stream URL or camera number')
@@ -208,12 +250,15 @@ def main():
     parser.add_argument('--neon-min', type=float, default=0.22, help='share of bib-coloured pixels that makes a box the bib team (with --neon-band)')
     parser.add_argument('--dark-min', type=float, default=0.30, help='share of dark pixels that makes a box the dark team (with --neon-band)')
     parser.add_argument('--vote-min', type=int, default=3, help='frames of one track that have to agree before the track gets a team letter (default 3; 1 labels a track at once)')
+    parser.add_argument('--team-vote-switch', type=int, default=0, metavar='N', help='a track that already has a team letter takes the other letter after N shirt readings in a row say the other team (a track number that moved to a player of the other team); unclear and unread frames neither count nor break the run; 0 = off (default, the vote stays cumulative)')
     parser.add_argument('--pitch-margin', type=float, help='metres outside the touchlines and goal lines that still count as the pitch (default 2.0; a smaller value keeps referees and substitutes at the line out)')
     parser.add_argument('--direction', type=int, choices=(1, -1), required=True, help='+1 when the focus team attacks toward +x (image right)')
     parser.add_argument('--team', choices=('A', 'B'), default='B')
     parser.add_argument('--detector', default='yolo11n.pt')
     parser.add_argument('--classifier')
     parser.add_argument('--team-profile', help='team_profile.json the coach saved on /team-select (<store>/service/team_profile.json): the own team is the colour group the coach chose, the other team the other group; without the file the fixed rule of this first match stays (dark shirts are team B)')
+    parser.add_argument('--small-box-team', type=float, default=0.0, metavar='SHARE', help='with --team-profile: read boxes 20-29 px high by the share of bib-coloured pixels (own share minus opponent share >= SHARE is the own team, app/small_box_team.py); 0 = off (default), boxes under 30 px stay unread')
+    parser.add_argument('--small-box-team-all', action='store_true', help='with --small-box-team: the bib pixel share reads every box of 20 px and more, also those of 30 px and more (instead of the mean colour); off by default')
     parser.add_argument('--reference-bg', type=float, nargs=4)
     parser.add_argument('--shift', type=float, nargs=2, default=(0.0, 0.0))
     parser.add_argument('--pitch-length', type=float, default=89.0)
@@ -231,6 +276,8 @@ def main():
     parser.add_argument('--tile-camera', choices=('cam1', 'cam3', 'cam4'), help='which picture layout the tile detector uses (the part of the frame that is pitch); default: the camera name')
     parser.add_argument('--box-zoom', action='store_true', help='extra detection pass over the penalty area of the attacked goal (about 1.4 times slower: no longer real time on this machine)')
     parser.add_argument('--max-retries', type=int, default=8, help='a stream or camera that stops is opened again this many times in a row (waits of 1, 2, 4 ... 30 s) before the run ends')
+    parser.add_argument('--reconnect-give-up-seconds', type=float, default=None, help='keep trying to open a stopped stream again for this many seconds before the run stops (default: the old limit of about 2 minutes); must be above 0')
+    parser.add_argument('--reconnect-max-seconds', type=float, default=30.0, help='the longest wait between two tries to open a stopped stream again (default 30 s; with 2 the waits are 1, 2, 2, 2 ... s); must be above 0')
     parser.add_argument('--max-frame-errors', type=int, default=50, help='this many frames in a row that fail in the analysis end the run; a single failed frame is skipped')
     parser.add_argument('--frames-log', help='write every analysed frame (time and the metre positions of both teams as the alert rules receive them) to this file, one JSON line per frame, so that the alert rules can be replayed without the video (scripts/replay_frames_log.py); off by default')
     parser.add_argument('--collect-hard-frames', metavar='FOLDER', help='save frames where the detector probably missed players (a sudden drop in the person count, too few players of the focus team) to this folder, with time, camera, reasons and boxes, for the user to draw boxes on later (app/hard_frames.py, wiki/hard-frames.md); a folder of its own, never the review store; off by default')
@@ -243,8 +290,28 @@ def main():
     parser.add_argument('--detector-half', action='store_true', help='run the detector in FP16 (GPU only; NOT measured on this machine yet)')
     parser.add_argument('--detector-batch', type=int, default=1, help='tiles per detector call (GPU only; NOT measured on this machine yet)')
     parser.add_argument('--detector-imgsz', type=int, default=768, help='size the 384 px tiles are enlarged to before the detector (768 = the live setting; larger values were measured only for ft_n2 on boxes a human confirmed, see wiki/detector-experiments.md)')
+    parser.add_argument('--far-strip', type=float, default=0.0, help='extra detector pass over the far strip: the top FRACTION (for example 0.4) of the pitch part of the frame, in --far-strip-tile px wide tiles enlarged to --far-strip-imgsz, merged with the normal result; 0 = off (default, nothing changes). '
+                        'Measured on boxes a human confirmed (work/model-improve-1122/detect-small): more far players; run time grows, see the replay results there')
+    parser.add_argument('--far-strip-tile', type=int, default=256, help='width of a tile of the far strip pass in px')
+    parser.add_argument('--far-strip-imgsz', type=int, default=1024, help='size the far strip tiles are enlarged to (multiple of 32)')
+    parser.add_argument('--far-strip-min-score', type=float, default=0.0, help='far strip pass: boxes below this score are dropped before the merge (0 = keep all; 0.25 was measured on 11-20 frames, filters_results.json)')
+    parser.add_argument('--far-strip-min-aspect', type=float, default=0.0, help='far strip pass: boxes narrower than this times their height are dropped (0.3 removes thin slivers; 0 = off)')
+    parser.add_argument('--far-strip-drop-seams', action='store_true', help='far strip pass: boxes touching the left or right seam of their strip tile are dropped')
+    parser.add_argument('--timing-log', help='write one JSON line per analysed frame (seconds of the whole frame analysis, of the detector, detections, detections on the pitch, boxes only the far strip added) to this file, for replay measurements; off by default')
+    parser.add_argument('--link-pitch', action='store_true', help='tracker: after the box-overlap stage, join a lost number and a left-over detection when their feet are close on the pitch (app/track_link.py); off by default')
+    parser.add_argument('--link-revive', action='store_true', help='tracker: a detection about to start a new number takes a lost number within the pitch gate instead, only when the pair is unambiguous (--link-margin); off by default')
+    parser.add_argument('--link-team-gate', action='store_true', help='tracker: a lost number with a known team vote never joins a detection whose shirt colour says the other team; off by default')
+    parser.add_argument('--link-decay-half-life', type=float, default=0.0, help='tracker: seconds in which the predicted speed of a lost number halves (0 = off, the default)')
+    parser.add_argument('--link-r0', type=float, default=1.5, help='pitch gate: metres allowed at once (with --link-pitch / --link-revive)')
+    parser.add_argument('--link-vmax', type=float, default=3.0, help='pitch gate: metres per second lost added to --link-r0 (3.0 was checked on 11-20 replays and photos; 7.0 joined too many wrong people)')
+    parser.add_argument('--link-max-age', type=float, default=2.0, help='pitch gate: a number lost for longer than this many seconds is not joined by the pitch rules (0 = no limit; 2.0 checked like --link-vmax)')
+    parser.add_argument('--link-margin', type=float, default=0.5, help='--link-revive (and --link-pitch with it): the next candidate must be at least this many metres farther')
+    parser.add_argument('--mark-keeper-zone', action='store_true', help='mark the track that stays in front of a goal (goal area, most of the last 10 s) with the role keeper_zone in the frames log (field keeper_zone, unlettered tracks included); '
+                        'adds a mark only, no point is removed and no team letter changes; off by default (app/keeper_zone.py)')
     parser.add_argument('--device', default='0', help='0 for the first GPU, cpu for no GPU')
     args = parser.parse_args()
+    if args.far_strip:
+        tile_detector.check_far_strip(args.far_strip, args.far_strip_tile, args.far_strip_imgsz)
     if args.camera_compensate and args.reference_bg:
         raise SystemExit('--camera-compensate replaces --reference-bg (both would count the same move twice).')
 
@@ -259,6 +326,7 @@ def main():
     detector = YOLO(args.detector)
     from ultralytics.engine.results import Boxes
     from ultralytics.trackers.byte_tracker import BYTETracker
+    from app.track_link import LinkTracker, link_enabled
     from ultralytics.utils import IterableSimpleNamespace, YAML
     from ultralytics.utils.checks import check_yaml
     config = IterableSimpleNamespace(**YAML.load(check_yaml('bytetrack.yaml')))
@@ -266,7 +334,12 @@ def main():
         setattr(config, key, value)
     config.track_high_thresh = config.new_track_thresh = 0.12
     config.track_low_thresh = 0.06
-    byte_tracker = BYTETracker(args=config)
+    link = link_options(args)
+    if link_enabled(link):
+        byte_tracker = LinkTracker(config, link, fps=args.analysis_fps)
+        print('Tracker linking rules on: ' + ', '.join(f'{k}={v}' for k, v in link.items()))
+    else:
+        byte_tracker = BYTETracker(args=config)
     device = 'cpu' if args.device == 'cpu' else int(args.device)
     tile_camera = args.tile_camera or args.camera
     margin_kw = {'margin': args.pitch_margin} if args.pitch_margin is not None else {}
@@ -275,13 +348,43 @@ def main():
         raise SystemExit(f'Team profile file not found: {Path(args.team_profile).name}. Choose the own team on /team-select first, or run without --team-profile.')
     if profile:
         print(f"Team colours from the coach's choice ({profile['created']}): own team {profile.get('note') or 'chosen'}" + ('; --classifier is not used for the team letters.' if args.classifier else '.'))
-    votes = TeamVotes(args.classifier, minimum=args.vote_min, profile=profile, own_letter=args.team, other_letter='A' if args.team == 'B' else 'B', neon_band=tuple(args.neon_band) if args.neon_band else None, neon_min=args.neon_min, dark_min=args.dark_min)
+    if args.small_box_team < 0:
+        raise SystemExit('--small-box-team must be 0 (off) or a share above 0.')
+    if args.team_vote_switch and args.team_vote_switch < max(2, args.vote_min):
+        raise SystemExit('--team-vote-switch must be 0 or at least --vote-min (and at least 2).')
+    reader_off = False
+    if args.small_box_team > 0 and profile:
+        # the bib-pixel reader only works when the profile's two colours are chromatic and far apart in hue; otherwise it is left out
+        # and the run is the same as one given none of the three options (--small-box-team, --small-box-team-all, --team-vote-switch).
+        try:
+            reader_on, reader_message = reader_decision(profile)
+        except ValueError as error:
+            raise SystemExit(str(error))
+        print(reader_message)
+        if not reader_on:
+            reader_off = True
+            args.small_box_team, args.small_box_team_all, args.team_vote_switch = 0.0, False, 0
+    votes = TeamVotes(args.classifier, minimum=args.vote_min, profile=profile, own_letter=args.team, other_letter='A' if args.team == 'B' else 'B', neon_band=tuple(args.neon_band) if args.neon_band else None, neon_min=args.neon_min, dark_min=args.dark_min, small_box_team=args.small_box_team, switch_streak=args.team_vote_switch, small_box_all=args.small_box_team_all)
+    if args.small_box_team > 0 and not profile:
+        print('WARNING: --small-box-team needs --team-profile; it is NOT active.')
+    if args.small_box_team_all and not args.small_box_team > 0 and not reader_off:
+        print('WARNING: --small-box-team-all needs --small-box-team SHARE; it is NOT active.')
+    if args.team_vote_switch:
+        if args.team_vote_switch < max(2, args.vote_min):
+            raise SystemExit('--team-vote-switch must be 0 or at least --vote-min (and at least 2).')
+        print(f'Team vote switch on: a track takes the other team after {args.team_vote_switch} readings in a row say so.')
+    keeper_zone = None
+    if args.mark_keeper_zone:
+        from app.keeper_zone import KeeperZone, SafeKeeperZone
+        keeper_zone = SafeKeeperZone(KeeperZone(args.pitch_length))
     analyzer = LiveAnalyzer(args.direction, args.pitch_length, args.pitch_width, args.analysis_fps)
     frames_log = open(args.frames_log, 'a', encoding='utf-8') if args.frames_log else None
+    timing_log = open(args.timing_log, 'w', encoding='utf-8') if args.timing_log else None
     if frames_log:
         frames_log.write(json.dumps({'type': 'header', 'direction': args.direction, 'pitch_length': args.pitch_length, 'pitch_width': args.pitch_width, 'fps': args.analysis_fps, 'team': args.team}) + chr(10))
     other = 'A' if args.team == 'B' else 'B'
     zoom_region = None
+    strip_keep = tile_detector.strip_filter(args.far_strip_min_score, args.far_strip_min_aspect, args.far_strip_drop_seams)
 
     source = int(args.source) if args.source.isdigit() else args.source
     is_file = isinstance(source, str) and Path(source).exists()
@@ -333,7 +436,7 @@ def main():
         record = status_record(kind, now)
         write_row(record)
         shown = (record, now)
-    reader = ReconnectingReader(open_source, is_file=is_file, max_retries=args.max_retries, notify=note)
+    reader = ReconnectingReader(open_source, is_file=is_file, max_retries=args.max_retries, max_wait=args.reconnect_max_seconds, notify=note, give_up_seconds=args.reconnect_give_up_seconds)
     use_queue = (not is_file) if args.latest_input is None else args.latest_input
     queue = LatestFrameQueue(reader, pace_fps=fps if is_file else None) if use_queue else None
     delays = DelayStats()
@@ -402,11 +505,19 @@ def main():
             else:
                 frame_shift = tuple(args.shift)
             try:
-                found = tile_detector.detect(detector, frame, tile_camera, device, args.confidence, batch_size=args.detector_batch, half=args.detector_half, imgsz=args.detector_imgsz)
+                frame_started = time.perf_counter()
+                strip_info = {} if args.timing_log else None
+                found = tile_detector.detect(detector, frame, tile_camera, device, args.confidence, batch_size=args.detector_batch, half=args.detector_half, imgsz=args.detector_imgsz,
+                                             far_strip=args.far_strip, strip_tile=args.far_strip_tile, strip_imgsz=args.far_strip_imgsz, strip_info=strip_info, strip_keep=strip_keep)
+                detect_seconds = time.perf_counter() - frame_started
                 if zoom_region:
                     found = merge_detections(found + detect_zoom(detector, frame, zoom_region, device, args.confidence))
                 array = np.array([[*d[:4], d[4], 0] for d in found], np.float32).reshape(-1, 6)
-                tracked = byte_tracker.update(Boxes(array, frame.shape[:2]), None)
+                if isinstance(byte_tracker, LinkTracker):
+                    feet, det_teams = link_inputs(found, frame, fitted, frame_shift, tuple(args.reference_bg) if args.reference_bg else None, votes, link['team_gate'])
+                    tracked = byte_tracker.update(Boxes(array, frame.shape[:2]), None, feet=feet, det_teams=det_teams, track_team=votes.label)
+                else:
+                    tracked = byte_tracker.update(Boxes(array, frame.shape[:2]), None)
                 mine, theirs, drawn = [], [], []
                 for row in tracked:
                     box, tid = row[:4], int(row[4])
@@ -419,6 +530,19 @@ def main():
                         continue
                     (mine if letter == args.team else theirs).append((tid, point[0], point[1]))
                     drawn.append((box, letter))
+                zone_marks, zone_seconds = None, 0.0
+                if keeper_zone:                                                          # a mark for the person staying in front of a goal; lettered or not
+                    zone_started = time.perf_counter()
+
+                    def zone_people_now():
+                        people_now = []
+                        for tr in tracked:
+                            zone_point = feet_to_metres(fitted, tr[:4], frame.shape[1], frame.shape[0], frame_shift, tuple(args.reference_bg) if args.reference_bg else None)
+                            if zone_point is not None:
+                                people_now.append((int(tr[4]), zone_point[0], zone_point[1], votes.label(int(tr[4]))))
+                        return people_now
+                    zone_marks = keeper_zone.update(t, args.direction, zone_people_now)
+                    zone_seconds = time.perf_counter() - zone_started
                 stats['frames'] += 1
                 if collector:
                     try:
@@ -428,7 +552,10 @@ def main():
                 stats['team'] += len(mine)
                 stats['other'] += len(theirs)
                 if frames_log:
-                    frames_log.write(json.dumps({'t': round(float(t), 3), 'team': [[tid, round(x, 2), round(y, 2)] for tid, x, y in mine], 'other': [[tid, round(x, 2), round(y, 2)] for tid, x, y in theirs]}) + chr(10))
+                    row = {'t': round(float(t), 3), 'team': [[tid, round(x, 2), round(y, 2)] for tid, x, y in mine], 'other': [[tid, round(x, 2), round(y, 2)] for tid, x, y in theirs]}
+                    if keeper_zone:
+                        row['keeper_zone'] = [[m['id'], m['x'], m['y'], m['goal'], m['side'], m['letter']] for m in zone_marks]
+                    frames_log.write(json.dumps(row) + chr(10))
                 for command in control.poll():                                           # second half: the other direction and a new analyser, no restart
                     args.direction = command['direction']
                     if args.box_zoom:                                                    # the penalty area of the goal that is attacked now
@@ -461,6 +588,13 @@ def main():
                     writer.write(frame)
                 errors = 0
                 delays.add(time.monotonic() - taken)
+                if timing_log:
+                    on_pitch = sum(feet_to_metres(fitted, d[:4], frame.shape[1], frame.shape[0], frame_shift, tuple(args.reference_bg) if args.reference_bg else None, **margin_kw) is not None for d in found)
+                    timing = {'t': round(float(t), 3), 'frame': index - 1, 'total_s': round(time.perf_counter() - frame_started, 4), 'detect_s': round(detect_seconds, 4), 'found': len(found), 'on_pitch': on_pitch,
+                              'strip_only': [[round(float(v), 1) for v in d] for d in (strip_info or {}).get('strip_only', [])]}
+                    if keeper_zone:
+                        timing['keeper_zone_s'] = round(zone_seconds, 5)
+                    timing_log.write(json.dumps(timing) + chr(10))
                 if args.heartbeat_seconds and time.monotonic() - last_beat >= args.heartbeat_seconds:
                     last_beat = time.monotonic()
                     write_row(heartbeat_record(t, beat_stats(queue, delays, camera_state)))
@@ -480,6 +614,8 @@ def main():
             position_log.close()
         if frames_log:
             frames_log.close()
+        if timing_log:
+            timing_log.close()
         if writer:
             writer.release()
     n = max(1, stats['frames'])
